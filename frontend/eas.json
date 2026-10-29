@@ -5,6 +5,7 @@
   },
   "build": {
     "base": {
+      "node": "22.23.4",
       "env": {
         "EXPO_PUBLIC_STELLAR_NETWORK": "testnet",
         "EXPO_PUBLIC_DEVICE_REGISTRY_CONTRACT": "CAC4KOLHDLDYDWBOKXNKRN5KVHO56PLOIFXDLTBUWGVN6GVDEB7FQHU5",

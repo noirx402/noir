@@ -18,8 +18,8 @@ never handles a user's secret key: writes go through the user's own wallet.
 > **Testnet only.** The contracts are deployed to Stellar Testnet and have not
 > had a third-party audit. Don't point this at real funds.
 
-**Used by** the [Noir Android app](https://github.com/rylsherdamz-rgb/Noir_Wallet/tree/main/frontend)
-and the [Noir Chrome extension](https://github.com/rylsherdamz-rgb/Noir_Wallet/tree/main/extension),
+**Used by** the [Noir Android app](https://github.com/noirx402/noir/tree/main/frontend)
+and the [Noir Chrome extension](https://github.com/noirx402/noir/tree/main/extension),
 both of which encode their contract calls with this package.
 
 ## Contents
@@ -270,11 +270,11 @@ if (!(await verifyWebhookSignature(secret, rawBody, req.headers['x-noir-signatur
 
 Deliveries older than 5 minutes are rejected (replay protection). Delivery is
 at-least-once, with retries on network errors, 429 and 5xx, so dedupe on
-`event.id`. Ready-to-run examples are in [`examples/`](https://github.com/rylsherdamz-rgb/Noir_Wallet/tree/main/sdk/agent-sdk/examples):
+`event.id`. Ready-to-run examples are in [`examples/`](https://github.com/noirx402/noir/tree/main/sdk/agent-sdk/examples):
 `check-and-pay.ts`, `webhook-relay.ts` and `webhook-receiver.ts`.
 
 Apps that can't run JavaScript, or want API keys and rate limits in front of
-Noir, can use the REST gateway in [`sdk/noir-api`](https://github.com/rylsherdamz-rgb/Noir_Wallet/tree/main/sdk/noir-api).
+Noir, can use the REST gateway in [`sdk/noir-api`](https://github.com/noirx402/noir/tree/main/sdk/noir-api).
 
 ## Networks
 

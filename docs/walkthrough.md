@@ -34,7 +34,7 @@ The items marked ⏳ are listed in [Still to do](README.md#still-to-do). Steps 6
 
 ## Before you start
 
-- The app on an NFC Android phone ([Installation](installation.md#4-run-the-app-on-an-android-phone)), or the [release APK](https://github.com/rylsherdamz-rgb/Noir_Wallet/releases/tag/Beta-Testing).
+- The app on an NFC Android phone ([Installation](installation.md#4-run-the-app-on-an-android-phone)), or the [release APK](https://github.com/noirx402/noir/releases/tag/Beta-Testing).
 - One NTAG213 tag ([NFC hardware](nfc-hardware.md)).
 - To reproduce the evidence without a phone: `cd frontend && npm run test:testnet`.
 

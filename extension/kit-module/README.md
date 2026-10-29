@@ -14,7 +14,7 @@ polyfills) and was verified inside a clone of the kit at `6f317cf` (v2.7.1):
 ```bash
 git clone https://github.com/Creit-Tech/Stellar-Wallets-Kit && cd Stellar-Wallets-Kit
 git checkout -b feat/noir-wallet-module
-git apply /path/to/Noir_Wallet/extension/kit-module/stellar-wallets-kit.patch
+git apply /path/to/noir/extension/kit-module/stellar-wallets-kit.patch
 cd src && deno test sdk/ && deno fmt --check sdk/modules/noir.module.ts
 ```
 

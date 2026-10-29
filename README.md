@@ -15,7 +15,7 @@ Tap any NFC tag, RFID sticker, or wearable to pay — no app opens, no confirmat
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](frontend/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-[Docs](docs/README.md) · [View Pitch Deck](ppt/Noir-Wallet-Pitch.pptx) · [Architecture](docs/architecture.md) · [Stellar Dev Guide](docs/stellar-development-guide.md) · [Deployment Evidence](docs/Evidence/README.md) · [PR #10 — Week 1](https://github.com/rylsherdamz-rgb/Noir_Wallet/pull/10) · [Run Locally](#getting-started)
+[Docs](docs/README.md) · [View Pitch Deck](ppt/Noir-Wallet-Pitch.pptx) · [Architecture](docs/architecture.md) · [Stellar Dev Guide](docs/stellar-development-guide.md) · [Deployment Evidence](docs/Evidence/README.md) · [PR #10 — Week 1](https://github.com/noirx402/noir/pull/10) · [Run Locally](#getting-started)
 
 </div>
 
@@ -199,7 +199,7 @@ Errors: `AlreadyInitialized=1`, `InsufficientBalance=2`, `AgentNotAuthorized=3`,
 ## Project Structure
 
 ```
-Noir_Wallet/
+noir/
 ├── frontend/                # React Native Expo application
 │   └── src/
 │       ├── screens/         # Dashboard, POS, Device Provisioning, Agents, etc.
@@ -290,8 +290,8 @@ Noir Wallet notifies you when money **arrives** at your main wallet or at any ca
 
 ```bash
 # Clone and install
-git clone https://github.com/rylsherdamz-rgb/Noir_Wallet.git
-cd Noir_Wallet/frontend
+git clone https://github.com/noirx402/noir.git
+cd noir/frontend
 npm install
 ```
 

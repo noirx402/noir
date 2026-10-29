@@ -28,7 +28,7 @@ Noir brings your Stellar wallet to the browser.
 
 Security: your recovery phrase is encrypted with your password (AES-256-GCM, PBKDF2 600k) and never leaves your device. The wallet locks itself after 15 minutes. No account, no analytics, no tracking.
 
-Open source (MIT): https://github.com/rylsherdamz-rgb/Noir_Wallet
+Open source (MIT): https://github.com/noirx402/noir
 Noir runs on Stellar Testnet today; Mainnet signing is available for any dApp.
 ```
 
@@ -40,8 +40,8 @@ Noir runs on Stellar Testnet today; Mainnet signing is available for any dApp.
 | Small promo tile (440×280) | `promo-small-440x280.png` |
 | Marquee (1400×560, optional) | `marquee-1400x560.png` |
 
-**Homepage URL:** https://rylsherdamz-rgb.github.io/Noir_Wallet/docs/extension/
-**Support URL:** https://github.com/rylsherdamz-rgb/Noir_Wallet/issues
+**Homepage URL:** https://noirx402.github.io/noir/docs/extension/
+**Support URL:** https://github.com/noirx402/noir/issues
 
 ## Privacy practices tab
 
@@ -65,7 +65,7 @@ Noir runs on Stellar Testnet today; Mainnet signing is available for any dApp.
 - I do not use or transfer user data for purposes that are unrelated to my item's single purpose
 - I do not use or transfer user data to determine creditworthiness or for lending purposes
 
-**Privacy policy URL:** https://rylsherdamz-rgb.github.io/Noir_Wallet/privacy/
+**Privacy policy URL:** https://noirx402.github.io/noir/privacy/
 (live once PR #14 is merged and GitHub Pages redeploys)
 
 ## Distribution

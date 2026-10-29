@@ -64,7 +64,7 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
-  "homepage_url": "https://rylsherdamz-rgb.github.io/Noir_Wallet/docs/extension/",
+  "homepage_url": "https://noirx402.github.io/noir/docs/extension/",
   "optional_permissions": [
     "notifications"
   ]

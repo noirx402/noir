@@ -1,6 +1,6 @@
 /** One place for every URL, ID and fact the site repeats. */
 
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rylsherdamz-rgb.github.io/Noir_Wallet').replace(/\/$/, '')
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://noirx402.github.io/noir').replace(/\/$/, '')
 export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
 /** Prefix for files in /public (next/link handles basePath itself; plain src/href don't). */
 export const asset = (path: string) => `${BASE_PATH}${path}`
@@ -12,7 +12,7 @@ export const TAGLINE = 'Tap. Pay. Done.'
 export const DESCRIPTION =
   'Noir is an open-source Stellar wallet you pay with by tapping an NFC card. Each card is bound to a constrained agent on Soroban — per-payment cap, one asset, an expiry — so a tap pays without unlocking your phone.'
 
-export const REPO = 'https://github.com/rylsherdamz-rgb/Noir_Wallet'
+export const REPO = 'https://github.com/noirx402/noir'
 export const REPO_TREE = `${REPO}/tree/main`
 export const REPO_BLOB = `${REPO}/blob/main`
 /** Latest GitHub release ("Beta Testing"). On a new release, update the tag, asset name and label together. */

@@ -2,7 +2,7 @@
 
 The final evidence index for the Stellar Community Fund Instaward: every Week 4 expected output, where its proof lives, and what is still open. Status is as of **2026-10-24**. The rule for this page: an item is ✅ only if the linked artifact exists and can be checked by a reviewer today.
 
-**Repository:** [github.com/rylsherdamz-rgb/Noir_Wallet](https://github.com/rylsherdamz-rgb/Noir_Wallet) — public, [MIT](../LICENSE) (GitHub detects the license as `MIT`).
+**Repository:** [github.com/noirx402/noir](https://github.com/noirx402/noir) — public, [MIT](../LICENSE) (GitHub detects the license as `MIT`).
 
 ## Summary
 
@@ -35,7 +35,7 @@ Also fixed: `redeploy-contracts.sh` built all three contracts in one cargo call,
 
 **Breaking change:** `agent_registry.initialize(admin, device_registry_id)`. The 2026-10-24 redeploy minted new contract IDs; the 2026-10-07 IDs are retired.
 
-[PR #22](https://github.com/rylsherdamz-rgb/Noir_Wallet/pull/22) (contract fixes) and [PR #25](https://github.com/rylsherdamz-rgb/Noir_Wallet/pull/25) (runtime/dependency security updates) are merged into development. The [2026-10-24 source-verification record](../deploy-evidence/issue24-source-verification-20261024T075044Z.md) records the reviewed source, offline checks, and artifact hashes. The fixes were redeployed on 2026-10-24 ([record](../deploy-evidence/deploy-testnet-20261024T131024Z.md)) and the live matrix passed against the new IDs ([report](../deploy-evidence/week4-security-matrix-20261024T131458Z.md)).
+[PR #22](https://github.com/noirx402/noir/pull/22) (contract fixes) and [PR #25](https://github.com/noirx402/noir/pull/25) (runtime/dependency security updates) are merged into development. The [2026-10-24 source-verification record](../deploy-evidence/issue24-source-verification-20261024T075044Z.md) records the reviewed source, offline checks, and artifact hashes. The fixes were redeployed on 2026-10-24 ([record](../deploy-evidence/deploy-testnet-20261024T131024Z.md)) and the live matrix passed against the new IDs ([report](../deploy-evidence/week4-security-matrix-20261024T131458Z.md)).
 
 ## 2. Positive- and negative-path validation
 
@@ -63,7 +63,7 @@ Every SOW case, with the contract test that proves it (CI, every push) and the l
 | Workflow | What it gates | Latest |
 |----------|---------------|--------|
 | [`contracts.yml`](../.github/workflows/contracts.yml) | WASM build + 60 contract tests | green on Instaward branches (see [PROGRESS.md → CI Status](../PROGRESS.md#ci-status)) |
-| [`frontend.yml`](../.github/workflows/frontend.yml) | App typecheck + unit tests | Historical [run 39405833152](https://github.com/rylsherdamz-rgb/Noir_Wallet/actions/runs/39405833152) ✅ (main, 2026-10-20; 306 tests) |
+| [`frontend.yml`](../.github/workflows/frontend.yml) | App typecheck + unit tests | Historical [run 39405833152](https://github.com/noirx402/noir/actions/runs/39405833152) ✅ (main, 2026-10-20; 306 tests) |
 | [`sdk.yml`](../.github/workflows/sdk.yml) | SDK + gateway typecheck, tests, build | Merged with #22; current verification and CI links are in the [source record](../deploy-evidence/issue24-source-verification-20261024T075044Z.md) |
 
 Local run, all suites, 2026-10-21: [`deploy-evidence/test-results-20261021T034015Z.txt`](../deploy-evidence/test-results-20261021T034015Z.txt) — 60 contract, 306 app, 18 SDK, 18 gateway, 0 failures.
@@ -93,4 +93,4 @@ Deployment is explicitly deferred in the current source-verification phase. Foll
 3. ✅ **Propagate the IDs** (done 2026-10-24, frontend Testnet flow re-run passing) everywhere listed in [deployment.md](deployment.md#propagate-new-ids-through-the-docs) (README, `frontend/.env*`, `frontend/eas.json`, `sdk/agent-sdk/src/networks.ts`, `landing/lib/site.ts`, docs, Obsidian notes), then re-run `cd frontend && npm run test:testnet`.
 4. **Build/install and verify the new app**, publish the accepted APK and tester notice retiring the old IDs. Recreate device links as needed; new contracts do not migrate old state.
 5. **Re-shoot the demo video** on a real Android phone with an NTAG213 against the redeployed contracts — [shot list](demo-video-script.md). The published [demo on X](https://x.com/Noirx402/status/2109282993588334632) (2026-10-11) stays linked until then. Label SDK `authorize`/merchant `claim` evidence accurately; those are not fully wired app features.
-6. Fill the ⏳ rows above with actual evidence. Keep #24 open until its deployment/live/build requirements are met; broader demo, release tagging and submission remain with [#23](https://github.com/rylsherdamz-rgb/Noir_Wallet/issues/23).
+6. Fill the ⏳ rows above with actual evidence. Keep #24 open until its deployment/live/build requirements are met; broader demo, release tagging and submission remain with [#23](https://github.com/noirx402/noir/issues/23).

@@ -16,7 +16,7 @@ How to run every test suite, what each one covers, and which test proves each SO
 
 Full output of this run: [`deploy-evidence/test-results-20261021T034015Z.txt`](../deploy-evidence/test-results-20261021T034015Z.txt). CI runs the contract, app and SDK suites on every push and PR (`contracts.yml`, `frontend.yml`, `sdk.yml`).
 
-The [2026-10-24 source-verification record](../deploy-evidence/issue24-source-verification-20261024T075044Z.md) covers the guarded matrix runner and current offline checks. No redeployment, live suite, or active contract-ID change is part of that work; [issue #24](https://github.com/rylsherdamz-rgb/Noir_Wallet/issues/24) remains open pending live acceptance.
+The [2026-10-24 source-verification record](../deploy-evidence/issue24-source-verification-20261024T075044Z.md) covers the guarded matrix runner and current offline checks. No redeployment, live suite, or active contract-ID change is part of that work; [issue #24](https://github.com/noirx402/noir/issues/24) remains open pending live acceptance.
 
 ## Running the tests
 
@@ -179,7 +179,7 @@ Steps: create and import a wallet → Friendbot → simulated NTAG213 UID → `r
 | [`contracts.yml`](../.github/workflows/contracts.yml) | push/PR to `main`, `instaward*` | Pinned Rust `1.98.1` + `wasm32v1-none` → build dependency WASM → build escrow → `cargo test` → WASM hash report (informational) |
 | [`frontend.yml`](../.github/workflows/frontend.yml) | push/PR to `main`, `instaward*` | Node 22.23.4 → `yarn install --frozen-lockfile` → `tsc --noEmit` → `yarn test` |
 
-Run history: [GitHub Actions](https://github.com/rylsherdamz-rgb/Noir_Wallet/actions).
+Run history: [GitHub Actions](https://github.com/noirx402/noir/actions).
 
 Related: [Contract reference](contracts.md) · [Walkthrough](walkthrough.md)
 

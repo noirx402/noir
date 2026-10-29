@@ -17,7 +17,7 @@ This project is under active development. Security fixes are applied to the late
 
 Please report privately using one of:
 
-- GitHub's [private security advisory](https://github.com/rylsherdamz-rgb/Noir_Wallet/security/advisories/new) ("Report a vulnerability")
+- GitHub's [private security advisory](https://github.com/noirx402/noir/security/advisories/new) ("Report a vulnerability")
 - A direct, confidential message to the maintainer ([@ChichiCode0](https://x.com/ChichiCode0))
 
 Include, where possible:

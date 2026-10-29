@@ -16,14 +16,14 @@
   ],
   "license": "MIT",
   "author": "Richie Christian De Guzman",
-  "homepage": "https://github.com/rylsherdamz-rgb/Noir_Wallet/tree/main/sdk/agent-sdk#readme",
+  "homepage": "https://github.com/noirx402/noir/tree/main/sdk/agent-sdk#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rylsherdamz-rgb/Noir_Wallet.git",
+    "url": "git+https://github.com/noirx402/noir.git",
     "directory": "sdk/agent-sdk"
   },
   "bugs": {
-    "url": "https://github.com/rylsherdamz-rgb/Noir_Wallet/issues"
+    "url": "https://github.com/noirx402/noir/issues"
   },
   "type": "module",
   "main": "dist/index.js",

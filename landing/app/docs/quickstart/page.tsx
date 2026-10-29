@@ -33,7 +33,7 @@ if (policy) {
       <h2 id="api">Option B — the REST API</h2>
       <p>Run the gateway (or use one your team hosts) and create a key:</p>
       <CodeBlock lang="bash" code={`
-git clone https://github.com/rylsherdamz-rgb/Noir_Wallet && cd Noir_Wallet/sdk/noir-api
+git clone https://github.com/noirx402/noir && cd noir/sdk/noir-api
 npm run setup && npm run build
 npm run keygen -- my-shop --scopes read,write,webhooks   # prints noir_sk_… once
 npm start                                                 # http://localhost:8787

@@ -5,7 +5,7 @@ This maps every weekly deliverable to its status. Measure every commit against t
 
 - **Project:** Noir Wallet
 - **Team:** Noir
-- **Repo:** https://github.com/rylsherdamz-rgb/Noir_Wallet
+- **Repo:** https://github.com/noirx402/noir
 - **Network:** Stellar Testnet
 - **Branches:** `instaward` (release), `instaward-staging` (staging), `instaward-development` (active work)
 
@@ -104,7 +104,7 @@ Workflows live in `.github/workflows/`. Both now run on the Instaward branches (
 | `frontend.yml` | `tsc --noEmit` + Vitest (306 tests) on Node 22 | ✅ Passing |
 | `sdk.yml` | Agent SDK + REST gateway: typecheck, tests, build (added 2026-10-21) | ⏳ first run on the Week 4 PR |
 
-**Contract tests in CI: passing.** Run [`37019373910`](https://github.com/rylsherdamz-rgb/Noir_Wallet/actions/runs/37019373910) executed 17 + 8 + 16 = 41 tests, 0 failures. This satisfies the SOW metric "automated contract tests passing in CI".
+**Contract tests in CI: passing.** Run [`37019373910`](https://github.com/noirx402/noir/actions/runs/37019373910) executed 17 + 8 + 16 = 41 tests, 0 failures. This satisfies the SOW metric "automated contract tests passing in CI".
 
 **Resolved — WASM hash step is now informational.** The hash-match assertion used to fail CI. Root cause (diagnosed 2026-10-02): Soroban WASM is **not byte-identical across machines**, independent of compiler version. `soroban-sdk` embeds the absolute source path of the build host into the artifact — a panic-location string pointing at `/home/<user>/.cargo/registry/.../soroban-sdk-25.3.1/src/ledger.rs`. On a GitHub runner that prefix is `/home/runner/...`; on the maintainer's machine it is `/home/richie/...`. Different byte string → different WASM → different SHA-256, even under the pinned `1.98.1` compiler.
 

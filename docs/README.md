@@ -24,7 +24,7 @@ What the SOW's Deliverable 3 asks for, and where each item lives.
 
 | Evidence item | Where | Status |
 |---------------|-------|--------|
-| MIT-licensed public repository | [`LICENSE`](../LICENSE) · [github.com/rylsherdamz-rgb/Noir_Wallet](https://github.com/rylsherdamz-rgb/Noir_Wallet) | ✅ |
+| MIT-licensed public repository | [`LICENSE`](../LICENSE) · [github.com/noirx402/noir](https://github.com/noirx402/noir) | ✅ |
 | Complete source code | [`backend/contracts/`](../backend/contracts/) · [`frontend/`](../frontend/) · [`sdk/`](../sdk/) · [`scripts/`](../scripts/) | ✅ |
 | Installation instructions | [installation.md](installation.md) | ✅ |
 | Deployment documentation and scripts | [deployment.md](deployment.md) · [`scripts/redeploy-contracts.sh`](../scripts/redeploy-contracts.sh) | ✅ |

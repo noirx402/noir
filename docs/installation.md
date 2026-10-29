@@ -27,8 +27,8 @@ cargo install --locked stellar-cli      # or see https://developers.stellar.org/
 ## 1. Clone
 
 ```bash
-git clone https://github.com/rylsherdamz-rgb/Noir_Wallet.git
-cd Noir_Wallet
+git clone https://github.com/noirx402/noir.git
+cd noir
 ```
 
 | Path | What it is |
@@ -106,7 +106,7 @@ npx expo run:android          # first build takes several minutes
 
 Later runs only need `npx expo start` while the dev client is installed.
 
-**No build machine?** Install the prebuilt APK from the [Beta-Testing release](https://github.com/rylsherdamz-rgb/Noir_Wallet/releases/tag/Beta-Testing) (`app-release.apk`). It uses the same Testnet contracts.
+**No build machine?** Install the prebuilt APK from the [Beta-Testing release](https://github.com/noirx402/noir/releases/tag/Beta-Testing) (`app-release.apk`). It uses the same Testnet contracts.
 
 Then follow the [walkthrough](walkthrough.md) to create a wallet, link a tag and run the payment flow.
 

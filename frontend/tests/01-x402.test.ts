@@ -786,7 +786,8 @@ describe('x402 escrow funding (payment_escrow)', () => {
     expect(call.signerSecret).toBe(wallet.secret())
     expect(call.args).toHaveLength(4)
     expect(scValToNative(call.args[0])).toBe(Asset.native().contractId(Networks.TESTNET))
-    expect(stellarService.walletAddressScVal).toHaveBeenCalledWith(wallet.publicKey())
+    expect(scValToNative(call.args[1])).toBe(wallet.publicKey())
+    expect(Buffer.from(scValToNative(call.args[2])).toString('hex')).toBe('f'.repeat(64))
     expect(call.args[3].switch().name).toBe('scvI128')
     expect(scValToNative(call.args[3])).toBe(250_000_000n)
   })
@@ -920,7 +921,8 @@ describe('x402 escrow safety (production paths)', () => {
     expect(order).toEqual(['revoke_agent', 'sweep_on_revoke', 'revoke'])
     expect(res).toEqual({ agentRevoked: true, sweptStroops: 70_000_000n, deviceRevoked: true })
     // sweep must name the agent that was just revoked
-    expect(stellarService.walletAddressScVal).toHaveBeenCalledWith(agent)
+    const sweep = (stellarService.invokeContractAndWait as any).mock.calls.find(([p]: any) => p.method === 'sweep_on_revoke')[0]
+    expect(sdk.scValToNative(sweep.args[2])).toBe(agent)
   })
 
   it('unlinkDevice skips steps already done and never sweeps an empty escrow', async () => {

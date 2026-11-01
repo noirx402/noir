@@ -1,6 +1,6 @@
 {
   "name": "noir-wallet-extension",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Noir browser extension: a Stellar wallet with a SEP-43 provider (window.noir.stellar) for dApps and Stellar Wallets Kit.",
   "license": "MIT",
@@ -8,22 +8,30 @@
   "scripts": {
     "build": "node build.mjs",
     "watch": "node build.mjs --watch",
-    "zip": "node build.mjs && cd dist && zip -qr ../noir-wallet-extension-$npm_package_version.zip .",
+    "zip": "node build.mjs && rm -f noir-wallet-extension-$npm_package_version.zip && cd dist && zip -qr ../noir-wallet-extension-$npm_package_version.zip .",
+    "release": "npm run typecheck && npm test && npm run test:e2e && npm run zip",
+    "publish:cws": "node scripts/publish-cws.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "npm run build && node tests/e2e.mjs"
+    "test:e2e": "npm run build && node tests/e2e.mjs",
+    "test:testnet": "NOIR_TESTNET=1 vitest run tests/testnet.test.ts"
   },
   "dependencies": {
     "@scure/bip39": "2.4.0",
     "@stellar/stellar-sdk": "^16.0.1",
-    "buffer": "^6.0.3"
+    "buffer": "^6.0.3",
+    "jsqr": "1.4.0",
+    "qrcode-generator": "2.0.4"
   },
   "devDependencies": {
     "@types/chrome": "^0.3.5",
     "@types/node": "^22.10.0",
     "esbuild": "0.28.2",
+    "playwright": "1.63.0",
     "typescript": "~5.9.3",
-    "vitest": "^4.1.9",
-    "playwright": "1.63.0"
+    "vitest": "^4.1.9"
+  },
+  "overrides": {
+    "axios": "^1.21.0"
   }
 }

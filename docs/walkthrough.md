@@ -13,7 +13,7 @@ create/import wallet → read NTAG213 → register device → authorize constrai
 |--------------|-------|-------------|
 | [`GCZPB2PG…CSGBZA`](https://stellar.expert/explorer/testnet/account/GCZPB2PG24UXCJXKHSEYLC75M5UODJKQXQCXHQVSDUCVXC7PHCCSGBZA) | `GAU44HL5…P7D4A3UE` | `1f61859f51c4d811…751da31c` |
 
-Contracts: device_registry `CB4DPMGO…HOWIRA` · agent_registry `CBTDMJVC…IXQ25JZ` · payment_escrow `CA5S4S7Q…D7BYK7HIX` ([deploy record](../deploy-evidence/deploy-testnet-20261007T050558Z.md)).
+Contracts: device_registry `CAC4KOLH…B7FQHU5` · agent_registry `CCMZDSPT…ZGPJ3EBV` · payment_escrow `CC7EAW5F…TW7E5BFS` ([deploy record](../deploy-evidence/deploy-testnet-20261024T131024Z.md)).
 
 ### Status at a glance
 
@@ -34,7 +34,7 @@ The items marked ⏳ are listed in [Still to do](README.md#still-to-do). Steps 6
 
 ## Before you start
 
-- The app on an NFC Android phone ([Installation](installation.md#4-run-the-app-on-an-android-phone)), or the [release APK](https://github.com/rylsherdamz-rgb/Noir_Wallet/releases/tag/Beta-Testing).
+- The app on an NFC Android phone ([Installation](installation.md#4-run-the-app-on-an-android-phone)), or the [release APK](https://github.com/noirx402/noir/releases/tag/Beta-Testing).
 - One NTAG213 tag ([NFC hardware](nfc-hardware.md)).
 - To reproduce the evidence without a phone: `cd frontend && npm run test:testnet`.
 

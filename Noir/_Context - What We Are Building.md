@@ -53,5 +53,5 @@ See [[_SCF Instaward - Deliverables & Constraints]] for the binding delivery con
 - Backend: Johnrick Rabara
 - UI/UX: Jefferson Tuparan (primary SCF contact — jeffersontuparan0@gmail.com)
 - Chapter: Philippines
-- Repo: https://github.com/rylsherdamz-rgb/Noir_Wallet
+- Repo: https://github.com/noirx402/noir
 - Mainnet XLM wallet: `GBLRRNEIJHU7YDJGXK5CC4WVQQWZ2WZCNY6F7ABLZIPNAYP3TDRH323Y`

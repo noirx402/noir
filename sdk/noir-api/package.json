@@ -15,7 +15,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@noir-wallet/agent-sdk": "file:../agent-sdk"
+    "@noirx402/agent-sdk": "file:../agent-sdk"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

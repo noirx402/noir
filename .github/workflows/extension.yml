@@ -1,0 +1,82 @@
+name: Extension CI
+
+on:
+  push:
+    branches: [main, instaward, instaward-staging, instaward-development]
+    paths:
+      - 'extension/**'
+      - 'sdk/agent-sdk/src/**'
+      - '.github/workflows/extension.yml'
+  pull_request:
+    paths:
+      - 'extension/**'
+      - 'sdk/agent-sdk/src/**'
+      - '.github/workflows/extension.yml'
+  # Manual release: Actions → Extension CI → Run workflow.
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Upload to the Chrome Web Store'
+        type: choice
+        options: ['no', 'upload-only', 'submit-for-review']
+        default: 'no'
+
+jobs:
+  test:
+    name: Typecheck, test, package
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extension
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.4
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      # The bundle aliases the repo's SDK source, so no SDK build is needed.
+      # The Playwright e2e needs a headed Chrome with the extension loaded; run it locally (npm run release).
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: noir-extension
+          path: extension/noir-wallet-extension-*.zip
+          if-no-files-found: error
+
+  publish:
+    name: Chrome Web Store
+    needs: test
+    if: github.event_name == 'workflow_dispatch' && inputs.publish != 'no'
+    runs-on: ubuntu-latest
+    # Add the CWS_* secrets to this environment (Settings → Environments) and require a reviewer.
+    environment: chrome-web-store
+    defaults:
+      run:
+        working-directory: extension
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: noir-extension
+          path: extension
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.4
+
+      - name: Upload${{ inputs.publish == 'submit-for-review' && ' and submit for review' || '' }}
+        run: node scripts/publish-cws.mjs ${{ inputs.publish == 'upload-only' && '--upload-only' || '' }}
+        env:
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+          CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+          CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}

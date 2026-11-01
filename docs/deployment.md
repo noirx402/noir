@@ -107,7 +107,7 @@ cd frontend && npm run test:testnet
 The script only patches `frontend/.env`. After a redeploy passes live acceptance and should become the public reference deploy, search for all three old IDs and replace active references; preserve dated historical evidence:
 
 ```bash
-git grep -l CB4DPMGOA374JIB2ZVD4AHW5GJKQUYNOFGRYNOJ75EFH2KCJSMHOWIRA
+git grep -l CAC4KOLHDLDYDWBOKXNKRN5KVHO56PLOIFXDLTBUWGVN6GVDEB7FQHU5
 ```
 
 Files that carry the IDs: `README.md`, `frontend/.env.example`, `frontend/eas.json`, `docs/*.md`, `docs/Evidence/README.md`, `landing/lib/site.ts`, `sdk/agent-sdk/src/networks.ts`, `PROGRESS.md`.
@@ -132,11 +132,11 @@ Anyone can check a deploy without trusting this repo:
 > [!NOTE]
 > The WASM hashes reproduce only on the **same build path** (for example the maintainer's machine). `soroban-sdk` embeds the absolute path of the cargo registry in the binary, so a build under a different home directory produces different bytes. CI prints its hashes as an informational report rather than failing on them. See [`PROGRESS.md` → CI Status](../PROGRESS.md#ci-status).
 
-Reference deploy currently in use: [`deploy-evidence/deploy-testnet-20261007T050558Z.md`](../deploy-evidence/deploy-testnet-20261007T050558Z.md).
+Reference deploy currently in use: [`deploy-evidence/deploy-testnet-20261024T131024Z.md`](../deploy-evidence/deploy-testnet-20261024T131024Z.md) (2026-10-24, Week 4 fixes; [security matrix PASS](../deploy-evidence/week4-security-matrix-20261024T131458Z.md)). The 2026-10-07 deploy ([`deploy-testnet-20261007T050558Z.md`](../deploy-evidence/deploy-testnet-20261007T050558Z.md)) is retired.
 
 ## Deferred issue #24 release handoff
 
-As of 2026-10-24, the [source-verification work](../deploy-evidence/issue24-source-verification-20261024T075044Z.md) performs **no redeployment, initialization, live tests, or active ID changes**. The October 7 reference deployment runs pre-fix code. [Issue #24](https://github.com/rylsherdamz-rgb/Noir_Wallet/issues/24) stays open until the release owner completes this handoff. Deployment/build automation does not replace live acceptance before APK publication.
+On 2026-10-24 the release owner redeployed the fixed contracts ([deploy record](../deploy-evidence/deploy-testnet-20261024T131024Z.md)), ran the guarded security matrix against the new IDs ([PASS](../deploy-evidence/week4-security-matrix-20261024T131458Z.md)) and propagated the IDs. The [source-verification record](../deploy-evidence/issue24-source-verification-20261024T075044Z.md) covers the offline phase before that. Steps 1–4 below are done; the APK build/publish (5) and the on-phone evidence (6) remain before [issue #24](https://github.com/noirx402/noir/issues/24) closes.
 
 The combined Actions workflow above runs the guarded security matrix between the deploy and the ID propagation, and stops unless it reports `PASS` for the new IDs (step 2 above). It automates the deploy, the matrix, the ID swap and the APK build in that order. These steps below stay manual:
 
@@ -153,7 +153,7 @@ The workflow uploads the APK to the release as soon as the matrix passes. Treat 
 3. Pass all three new IDs explicitly to the [guarded SDK security matrix](testing.md#deferred-release-owner-only) before propagation. Require a complete `PASS` report, all 20 outcomes exactly once, and Vitest exit code 0. Keep its transaction/error evidence alongside the deployment record; retain local regression proof for fixes outside the live matrix's coverage.
 4. Propagate the accepted IDs together through `frontend/.env`, `frontend/.env.example`, `frontend/eas.json`, `sdk/agent-sdk/src/networks.ts`, `landing/lib/site.ts`, README, current contract/installation/deployment/evidence docs, `PROGRESS.md`, and active `Noir/` deployment notes. Search for all three old IDs to find other consumers, leaving dated historical records intact. Rebuild the SDK/gateway where deployed, restart/rebundle the app, and rerun the frontend live Testnet flow with its separate public-ID configuration.
 5. Build and install an Android app containing the accepted IDs; verify its actual target before publishing the APK. Editing `.env` cannot update an installed binary. Publish the new beta build and tester notice retiring the old IDs and explaining any required device relinking.
-6. Link the new contract/init pages, complete matrix report and command summary, `authorize`, merchant `claim`, revoke/sweep transaction pages, frontend Testnet summary, and app build/version evidence from the Week 4 docs. Keep simulation refusals as error evidence, without fabricated transaction hashes. Add dated captures under `docs/Evidence/week4-security/` when they exist. Leave the physical NFC demo and broader release/submission work tracked by [#23](https://github.com/rylsherdamz-rgb/Noir_Wallet/issues/23).
+6. Link the new contract/init pages, complete matrix report and command summary, `authorize`, merchant `claim`, revoke/sweep transaction pages, frontend Testnet summary, and app build/version evidence from the Week 4 docs. Keep simulation refusals as error evidence, without fabricated transaction hashes. Add dated captures under `docs/Evidence/week4-security/` when they exist. Leave the physical NFC demo and broader release/submission work tracked by [#23](https://github.com/noirx402/noir/issues/23).
 
 A phone and NTAG213 are needed only for later physical acceptance with a native Android build. The SDK matrix can validate escrow `authorize` and merchant `claim`; current tap screens and merchant UI do not fully implement those flows.
 

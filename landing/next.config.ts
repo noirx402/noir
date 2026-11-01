@@ -1,6 +1,6 @@
 import type { NextConfig } from 'next'
 
-// GitHub Pages serves this repo's site under /Noir_Wallet; the Pages workflow
+// GitHub Pages serves this repo's site under /noir; the Pages workflow
 // passes that in. Locally and on a custom domain it is empty.
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
 

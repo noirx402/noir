@@ -26,12 +26,12 @@ const OPS = [
 export default function Sdk() {
   return (
     <DocPage slug="sdk">
-      <CodeBlock lang="bash" code="npm install @noir-wallet/agent-sdk @stellar/stellar-sdk" />
+      <CodeBlock lang="bash" code="npm install @noirx402/agent-sdk @stellar/stellar-sdk" />
       <p>Works in Node 22.23.4+ (or 24.22.1+), browsers and React Native. Secret keys never pass through the SDK unless you choose <code>keypairSigner</code> on a server.</p>
 
       <h2 id="client">Create a client</h2>
       <CodeBlock lang="ts" code={`
-import { NoirAgentClient, TESTNET } from '@noir-wallet/agent-sdk'
+import { NoirAgentClient, TESTNET } from '@noirx402/agent-sdk'
 
 const noir = new NoirAgentClient()                      // Noir on Testnet
 const viaMyRpc = new NoirAgentClient({ rpcUrl: 'https://my-rpc.example' })
@@ -54,7 +54,7 @@ const myDeploy = new NoirAgentClient({ network: {
       <h2 id="signers">Signers</h2>
       <p>Writes take a <code>NoirSigner</code>: any object with <code>publicKey</code> and <code>signTransaction(xdr, {'{ networkPassphrase }'})</code> — the Freighter / Stellar Wallets Kit shape.</p>
       <CodeBlock lang="ts" code={`
-import { keypairSigner } from '@noir-wallet/agent-sdk'
+import { keypairSigner } from '@noirx402/agent-sdk'
 
 const agent = keypairSigner(process.env.AGENT_SECRET!)   // server-side agent
 const merchant = walletKitSigner                         // a connected browser wallet
@@ -62,7 +62,7 @@ const merchant = walletKitSigner                         // a connected browser 
 
       <h3 id="wallet-signers">From a connected wallet</h3>
       <CodeBlock lang="ts" code={`
-import { noirExtensionSigner, walletSigner } from '@noir-wallet/agent-sdk'
+import { noirExtensionSigner, walletSigner } from '@noirx402/agent-sdk'
 
 const signer = await noirExtensionSigner()            // the Noir extension
 const { address } = await StellarWalletsKit.getAddress()
@@ -72,7 +72,7 @@ const kitSigner = walletSigner(StellarWalletsKit, address) // any Stellar Wallet
       <h2 id="amounts">Amounts</h2>
       <p>Contracts work in stroops (1 XLM = 10,000,000). Convert exactly, without floats:</p>
       <CodeBlock lang="ts" code={`
-import { toStroops, fromStroops } from '@noir-wallet/agent-sdk'
+import { toStroops, fromStroops } from '@noirx402/agent-sdk'
 
 toStroops('2.5')          // 25000000n
 fromStroops(25000000n)    // '2.5'

@@ -1,4 +1,5 @@
-import { Keypair, xdr, Address, Asset, nativeToScVal, scValToNative } from '@stellar/stellar-sdk'
+import { Keypair, xdr, Address, Asset, scValToNative } from '@stellar/stellar-sdk'
+import { toCall, parseContractError, toHex, type NoirContracts, type NoirOperation } from '@noirx402/agent-sdk'
 import { secureGetItem, secureSetItem, secureDeleteItem } from '@/services/secureStorage'
 import { stellarService } from '@/services/stellar-service'
 import { AppConfig } from '@/constants/config'
@@ -61,10 +62,13 @@ function parseDeviceInfo(val: xdr.ScVal, walletPub: string): DeviceOwnership {
   }
 }
 
-// ── agent_registry policy args ──────────────────────────────────────────────
-// register_agent(wallet, device_hash, agent, max_amount: i128, asset: Address,
-// expires_at: u64). Agents spend native XLM via its Stellar Asset Contract.
-// max_amount = 0 → uncapped per payment; expires_at = 0 → never expires.
+// ── contract calls via @noirx402/agent-sdk ──────────────────────────────────
+// Argument encoding and contract error names come from the published SDK, the
+// same code the Chrome extension and third-party integrations run. Signing and
+// submission stay in stellarService, which carries the React Native fixes for
+// stellar-sdk v16 (see frontend/AGENTS.md).
+
+// Agents spend native XLM via its Stellar Asset Contract.
 function nativeXlmSac(): string {
   const passphrase = stellarService.networkName === 'mainnet'
     ? 'Public Global Stellar Network ; September 2015'
@@ -72,13 +76,30 @@ function nativeXlmSac(): string {
   return Asset.native().contractId(passphrase)
 }
 
-function agentPolicyArgs(maxAmountStroops: bigint = 0n, expiresAt: bigint = 0n): xdr.ScVal[] {
-  return [
-    nativeToScVal(maxAmountStroops, { type: 'i128' }),
-    new Address(nativeXlmSac()).toScVal(),
-    nativeToScVal(expiresAt, { type: 'u64' }),
-  ]
+function contractIdOf(contract: keyof NoirContracts): string {
+  const id = {
+    deviceRegistry: AppConfig.stellar.deviceRegistryContract,
+    agentRegistry: AppConfig.stellar.agentRegistryContract,
+    paymentEscrow: AppConfig.stellar.paymentEscrowContract,
+  }[contract]
+  if (!id) throw new Error(`${contract} contract not configured`)
+  return id
 }
+
+/** `op` as a stellarService call: contract id, method and SDK-encoded args. */
+function sdkCall(source: string, op: NoirOperation): { contractId: string; method: string; args: xdr.ScVal[] } {
+  const { contract, method, args } = toCall(source, op)
+  return { contractId: contractIdOf(contract), method, args }
+}
+
+/** The contract's own error name for `err` (e.g. 'AlreadyRegistered'), or null. */
+function contractErrorName(contract: keyof NoirContracts, err: unknown): string | null {
+  const msg = (err as any)?.message ?? String(err ?? '')
+  return parseContractError(contract, '', msg)?.errorName ?? null
+}
+
+/** The contract stores expiry as unix seconds (0 = never); the SDK takes a Date or null. */
+const expiryDate = (expiresAt: bigint): Date | null => (expiresAt === 0n ? null : new Date(Number(expiresAt) * 1000))
 
 /** Constrained delegation policy, in contract units. */
 export interface AgentPolicyInput {
@@ -711,23 +732,18 @@ export const x402 = {
     if (!contractIdDevice) throw new Error('deviceRegistryContract not configured')
     if (!contractIdAgent) throw new Error('agentRegistryContract not configured')
 
-    // Error codes differ per contract: device_registry AlreadyRegistered = #4
-    // (#3 NotOwner), agent_registry AlreadyRegistered = #3 but #4 is
-    // InvalidPolicy — which must surface, not be swallowed as "already done".
-    const deviceAlreadyRegistered = (e: any) => {
-      const msg = e?.message ?? ''
-      return msg.includes('Error(Contract, #4)') || msg.includes('Error(Contract, #3)') || msg.includes('AlreadyRegistered')
-    }
-    const agentAlreadyRegistered = (e: any) => {
-      const msg = e?.message ?? ''
-      return msg.includes('Error(Contract, #3)') || msg.includes('AlreadyRegistered')
-    }
+    // Error codes differ per contract, so match the SDK's per-contract names:
+    // agent_registry #4 is InvalidPolicy, which must surface, not be swallowed
+    // as "already done".
+    const deviceAlreadyRegistered = (e: any) =>
+      ['AlreadyRegistered', 'NotOwner'].includes(contractErrorName('deviceRegistry', e) ?? '') || (e?.message ?? '').includes('AlreadyRegistered')
+    const agentAlreadyRegistered = (e: any) =>
+      contractErrorName('agentRegistry', e) === 'AlreadyRegistered' || (e?.message ?? '').includes('AlreadyRegistered')
 
     const kp = Keypair.fromSecret(params.walletSecret)
     const pub = kp.publicKey()
     const account = await stellarService.loadSourceAccount(pub)
 
-    const walletScVal = stellarService.walletAddressScVal(pub)
     const deviceHashScVal = stellarService.deviceHashScVal(params.deviceHashHex)
     const agentScVal = stellarService.walletAddressScVal(params.agentPublicKey)
 
@@ -769,7 +785,7 @@ export const x402 = {
     } else {
       const e = deviceCheck.error
       const msg = e?.message ?? ''
-      if (!msg.includes('Error(Contract, #2)') && !msg.includes('DeviceNotFound')) {
+      if (contractErrorName('deviceRegistry', e) !== 'DeviceNotFound' && !msg.includes('DeviceNotFound')) {
         logger.debug(`[x402] device pre-check failed (falling back to write): ${msg}`)
       }
     }
@@ -787,9 +803,7 @@ export const x402 = {
         // Wait for finality: callers read ownership / fund escrow right after,
         // and a submitted-but-unconfirmed register still reads as "free".
         await stellarService.invokeContractAndWait({
-          contractId: contractIdDevice,
-          method: 'register',
-          args: [walletScVal, deviceHashScVal, agentScVal],
+          ...sdkCall(pub, { kind: 'registerDevice', deviceHash: params.deviceHashHex, agent: params.agentPublicKey }),
           signerSecret: params.walletSecret,
           sourceAccount: account,
         })
@@ -817,9 +831,10 @@ export const x402 = {
       const { maxAmountStroops, expiresAt } = policy ?? { maxAmountStroops: 0n, expiresAt: 0n }
       try {
         await stellarService.invokeContractAndWait({
-          contractId: contractIdAgent,
-          method: 'register_agent',
-          args: [walletScVal, deviceHashScVal, agentScVal, ...agentPolicyArgs(maxAmountStroops, expiresAt)],
+          ...sdkCall(pub, {
+            kind: 'registerAgent', deviceHash: params.deviceHashHex, agent: params.agentPublicKey,
+            asset: nativeXlmSac(), maxAmount: maxAmountStroops, expiresAt: expiryDate(expiresAt),
+          }),
           signerSecret: params.walletSecret,
           sourceAccount: account,
         })
@@ -921,7 +936,7 @@ export const x402 = {
       return parseDeviceInfo(val, walletPub)
     } catch (e: any) {
       const msg = e?.message ?? ''
-      if (msg.includes('Error(Contract, #2)') || msg.includes('DeviceNotFound')) return { status: 'free' }
+      if (contractErrorName('deviceRegistry', e) === 'DeviceNotFound' || msg.includes('DeviceNotFound')) return { status: 'free' }
       throw e
     }
   },
@@ -931,17 +946,9 @@ export const x402 = {
     deviceHashHex: string
     agentPublicKey: string
   }): Promise<string> {
-    const contractId = AppConfig.stellar.deviceRegistryContract
-    if (!contractId) throw new Error('deviceRegistryContract not configured')
-
+    const pub = Keypair.fromSecret(params.walletSecret).publicKey()
     return stellarService.invokeContract({
-      contractId,
-      method: 'register',
-      args: [
-        stellarService.walletAddressScVal(Keypair.fromSecret(params.walletSecret).publicKey()),
-        stellarService.deviceHashScVal(params.deviceHashHex),
-        stellarService.walletAddressScVal(params.agentPublicKey),
-      ],
+      ...sdkCall(pub, { kind: 'registerDevice', deviceHash: params.deviceHashHex, agent: params.agentPublicKey }),
       signerSecret: params.walletSecret,
     })
   },
@@ -950,39 +957,27 @@ export const x402 = {
     walletSecret: string
     deviceHashHex: string
   }): Promise<string> {
-    const contractId = AppConfig.stellar.deviceRegistryContract
-    if (!contractId) throw new Error('deviceRegistryContract not configured')
-
+    const pub = Keypair.fromSecret(params.walletSecret).publicKey()
     return stellarService.invokeContract({
-      contractId,
-      method: 'revoke',
-      args: [
-        stellarService.walletAddressScVal(Keypair.fromSecret(params.walletSecret).publicKey()),
-        stellarService.deviceHashScVal(params.deviceHashHex),
-      ],
+      ...sdkCall(pub, { kind: 'revokeDevice', deviceHash: params.deviceHashHex }),
       signerSecret: params.walletSecret,
     })
   },
 
   // ── agent_registry contract ──
 
+  /** Registers with the uncapped, never-expiring policy (max_amount 0, expires_at 0). */
   async registerAgentOnChain(params: {
     walletSecret: string
     deviceHashHex: string
     agentPublicKey: string
   }): Promise<string> {
-    const contractId = AppConfig.stellar.agentRegistryContract
-    if (!contractId) throw new Error('agentRegistryContract not configured')
-
+    const pub = Keypair.fromSecret(params.walletSecret).publicKey()
     return stellarService.invokeContract({
-      contractId,
-      method: 'register_agent',
-      args: [
-        stellarService.walletAddressScVal(Keypair.fromSecret(params.walletSecret).publicKey()),
-        stellarService.deviceHashScVal(params.deviceHashHex),
-        stellarService.walletAddressScVal(params.agentPublicKey),
-        ...agentPolicyArgs(),
-      ],
+      ...sdkCall(pub, {
+        kind: 'registerAgent', deviceHash: params.deviceHashHex, agent: params.agentPublicKey,
+        asset: nativeXlmSac(), maxAmount: 0n, expiresAt: null,
+      }),
       signerSecret: params.walletSecret,
     })
   },
@@ -991,16 +986,9 @@ export const x402 = {
     walletSecret: string
     deviceHashHex: string
   }): Promise<string> {
-    const contractId = AppConfig.stellar.agentRegistryContract
-    if (!contractId) throw new Error('agentRegistryContract not configured')
-
+    const pub = Keypair.fromSecret(params.walletSecret).publicKey()
     return stellarService.invokeContract({
-      contractId,
-      method: 'revoke_agent',
-      args: [
-        stellarService.walletAddressScVal(Keypair.fromSecret(params.walletSecret).publicKey()),
-        stellarService.deviceHashScVal(params.deviceHashHex),
-      ],
+      ...sdkCall(pub, { kind: 'revokeAgent', deviceHash: params.deviceHashHex }),
       signerSecret: params.walletSecret,
     })
   },
@@ -1043,14 +1031,7 @@ export const x402 = {
     // Wait for finality: the caller refreshes balance_of right after, and a
     // fire-and-forget submit could still fail after we reported success.
     const hash = await stellarService.invokeContractAndWait({
-      contractId,
-      method: 'fund_escrow',
-      args: [
-        new Address(nativeXlmSac()).toScVal(),
-        stellarService.walletAddressScVal(walletPub),
-        stellarService.deviceHashScVal(params.deviceHashHex),
-        nativeToScVal(amountStroops, { type: 'i128' }),
-      ],
+      ...sdkCall(walletPub, { kind: 'fundEscrow', deviceHash: params.deviceHashHex, token: nativeXlmSac(), amount: amountStroops }),
       signerSecret: params.walletSecret,
     })
     stellarService.invalidateBalance?.(walletPub)
@@ -1073,13 +1054,7 @@ export const x402 = {
 
     const walletPub = Keypair.fromSecret(params.walletSecret).publicKey()
     const hash = await stellarService.invokeContractAndWait({
-      contractId,
-      method: 'defund_escrow',
-      args: [
-        new Address(nativeXlmSac()).toScVal(),
-        stellarService.deviceHashScVal(params.deviceHashHex),
-        nativeToScVal(params.amountStroops, { type: 'i128' }),
-      ],
+      ...sdkCall(walletPub, { kind: 'defundEscrow', deviceHash: params.deviceHashHex, token: nativeXlmSac(), amount: params.amountStroops }),
       signerSecret: params.walletSecret,
     })
     stellarService.invalidateBalance?.(walletPub)
@@ -1116,8 +1091,7 @@ export const x402 = {
     if (!deviceId || !agentId || !escrowId) throw new Error('Contracts not configured')
 
     const pub = Keypair.fromSecret(params.walletSecret).publicKey()
-    const walletScVal = stellarService.walletAddressScVal(pub)
-    const deviceHashScVal = stellarService.deviceHashScVal(params.deviceHashHex)
+    const deviceHash = params.deviceHashHex
 
     const [ownership, policy, escrow] = await Promise.all([
       this.getDeviceOwnership(params.deviceHashHex, pub),
@@ -1133,9 +1107,7 @@ export const x402 = {
 
     if (policy) {
       await stellarService.invokeContractAndWait({
-        contractId: agentId,
-        method: 'revoke_agent',
-        args: [walletScVal, deviceHashScVal],
+        ...sdkCall(pub, { kind: 'revokeAgent', deviceHash }),
         signerSecret: params.walletSecret,
         sourceAccount: account,
       })
@@ -1148,13 +1120,7 @@ export const x402 = {
         throw new Error('Escrow balance remains but the device is no longer registered')
       }
       await stellarService.invokeContractAndWait({
-        contractId: escrowId,
-        method: 'sweep_on_revoke',
-        args: [
-          new Address(nativeXlmSac()).toScVal(),
-          deviceHashScVal,
-          stellarService.walletAddressScVal(policy?.agent ?? params.agentPublicKey ?? pub),
-        ],
+        ...sdkCall(pub, { kind: 'sweepOnRevoke', deviceHash, token: nativeXlmSac(), agent: policy?.agent ?? params.agentPublicKey ?? pub }),
         signerSecret: params.walletSecret,
         sourceAccount: account,
       })
@@ -1163,9 +1129,7 @@ export const x402 = {
 
     if (ownership.status === 'mine') {
       await stellarService.invokeContractAndWait({
-        contractId: deviceId,
-        method: 'revoke',
-        args: [walletScVal, deviceHashScVal],
+        ...sdkCall(pub, { kind: 'revokeDevice', deviceHash }),
         signerSecret: params.walletSecret,
         sourceAccount: account,
       })
@@ -1217,7 +1181,7 @@ export const x402 = {
       }
     } catch (e: any) {
       const msg = e?.message ?? ''
-      if (msg.includes('AgentNotFound') || msg.includes('Error(Contract, #2)')) return null
+      if (contractErrorName('agentRegistry', e) === 'AgentNotFound' || msg.includes('AgentNotFound')) return null
       throw e
     }
   },
@@ -1266,7 +1230,7 @@ export const x402 = {
         source: walletAddress,
       })
       const raw: Uint8Array = hashScVal.bytes()
-      const deviceHashHex = Buffer.from(raw).toString('hex')
+      const deviceHashHex = toHex(raw)
 
       const agentScVal = await stellarService.readContract({
         contractId,

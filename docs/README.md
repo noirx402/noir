@@ -24,7 +24,7 @@ What the SOW's Deliverable 3 asks for, and where each item lives.
 
 | Evidence item | Where | Status |
 |---------------|-------|--------|
-| MIT-licensed public repository | [`LICENSE`](../LICENSE) · [github.com/rylsherdamz-rgb/Noir_Wallet](https://github.com/rylsherdamz-rgb/Noir_Wallet) | ✅ |
+| MIT-licensed public repository | [`LICENSE`](../LICENSE) · [github.com/noirx402/noir](https://github.com/noirx402/noir) | ✅ |
 | Complete source code | [`backend/contracts/`](../backend/contracts/) · [`frontend/`](../frontend/) · [`sdk/`](../sdk/) · [`scripts/`](../scripts/) | ✅ |
 | Installation instructions | [installation.md](installation.md) | ✅ |
 | Deployment documentation and scripts | [deployment.md](deployment.md) · [`scripts/redeploy-contracts.sh`](../scripts/redeploy-contracts.sh) | ✅ |
@@ -34,7 +34,7 @@ What the SOW's Deliverable 3 asks for, and where each item lives.
 | API references | [api-reference.md](api-reference.md) · [`sdk/agent-sdk/README.md`](../sdk/agent-sdk/README.md) · [`sdk/noir-api/README.md`](../sdk/noir-api/README.md) | ✅ |
 | Developer documentation | [stellar-development-guide.md](stellar-development-guide.md) · [`CONTRIBUTING.md`](../CONTRIBUTING.md) · [`SECURITY.md`](../SECURITY.md) | ✅ |
 | Automated test documentation | [testing.md](testing.md): 60 contract tests, 306 app tests, 36 SDK/gateway tests, CI · [results](../deploy-evidence/test-results-20261021T034015Z.txt) | ✅ |
-| Contract IDs, WASM hashes, Testnet tx links | [`deploy-evidence/deploy-testnet-20261007T050558Z.md`](../deploy-evidence/deploy-testnet-20261007T050558Z.md) · [`week2-testnet-flow-…md`](../deploy-evidence/week2-testnet-flow-20261009T044804Z.md) | 🟡 published, but the live deploy predates the Week 4 security fixes — redeploy pending |
+| Contract IDs, WASM hashes, Testnet tx links | [`deploy-evidence/deploy-testnet-20261024T131024Z.md`](../deploy-evidence/deploy-testnet-20261024T131024Z.md) · [`week2-testnet-flow-…md`](../deploy-evidence/week2-testnet-flow-20261009T044804Z.md) | 🟡 published, but the live deploy predates the Week 4 security fixes — redeploy pending |
 | Walkthrough of the NFC delegated payment workflow | [walkthrough.md](walkthrough.md) | 🟡 steps 1–5 and 8 have live evidence; `authorize` / `claim` still to do |
 | Demo video | [`assets/noir-demo.mp4`](../assets/noir-demo.mp4) · [`assets/x-demo.mp4`](../assets/x-demo.mp4) · [promo on X](https://x.com/Noirx402/status/2109282993588334632) | ✅ [demo on X](https://x.com/Noirx402/status/2109282993588334632) published 2026-10-11 · 🟡 re-shoot on the redeployed contracts — [shot list](demo-video-script.md) |
 

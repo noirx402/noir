@@ -42,5 +42,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PDAX fiat-bridge integration (optional PHP cash-out).
 - Testnet deployment of all three contracts.
 
-[Unreleased]: https://github.com/rylsherdamz-rgb/Noir_Wallet/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/rylsherdamz-rgb/Noir_Wallet/releases/tag/v1.0.0
+[Unreleased]: https://github.com/noirx402/noir/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/noirx402/noir/releases/tag/v1.0.0

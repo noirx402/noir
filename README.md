@@ -15,7 +15,7 @@ Tap any NFC tag, RFID sticker, or wearable to pay — no app opens, no confirmat
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](frontend/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-[Docs](docs/README.md) · [View Pitch Deck](ppt/Noir-Wallet-Pitch.pptx) · [Architecture](docs/architecture.md) · [Stellar Dev Guide](docs/stellar-development-guide.md) · [Deployment Evidence](docs/Evidence/README.md) · [PR #10 — Week 1](https://github.com/rylsherdamz-rgb/Noir_Wallet/pull/10) · [Run Locally](#getting-started)
+[Docs](docs/README.md) · [View Pitch Deck](ppt/Noir-Wallet-Pitch.pptx) · [Architecture](docs/architecture.md) · [Stellar Dev Guide](docs/stellar-development-guide.md) · [Deployment Evidence](docs/Evidence/README.md) · [PR #10 — Week 1](https://github.com/noirx402/noir/pull/10) · [Run Locally](#getting-started)
 
 </div>
 
@@ -126,20 +126,20 @@ Mobile App / POS Terminal
 | **agent_registry** | On-chain agent authorization per device — allows wallet owner to authorize a signing key for tap-to-pay | `wallet.require_auth()` | `backend/contracts/agent_registry/` |
 | **payment_escrow** | Escrow-based settlement — wallet pre-funds, agent authorizes payments instantly, merchants claim in batch | agent auth (via `agent_registry`) | `backend/contracts/payment_escrow/` |
 
-**Testnet Contract IDs** (redeployed 2026-10-07 — constrained delegated auth + sweep-on-revoke, `#[contractevent]` migration):
+**Testnet Contract IDs** (redeployed 2026-10-24 — Week 4 security fixes live; security matrix [PASS](deploy-evidence/week4-security-matrix-20261024T131458Z.md)):
 
 | Contract | ID | WASM SHA-256 | Explorer |
 |----------|----|--------------|----------|
-| device_registry | `CB4DPMGOA374JIB2ZVD4AHW5GJKQUYNOFGRYNOJ75EFH2KCJSMHOWIRA` | `a252a407…67bea2` | [view](https://stellar.expert/explorer/testnet/contract/CB4DPMGOA374JIB2ZVD4AHW5GJKQUYNOFGRYNOJ75EFH2KCJSMHOWIRA) |
-| agent_registry | `CBTDMJVCFQDIVWZBKAKZ2FQ3UEJNAAUFYCTJ3E4ON2MYXPLPSIXQ25JZ` | `b0da4885…c7a22b` | [view](https://stellar.expert/explorer/testnet/contract/CBTDMJVCFQDIVWZBKAKZ2FQ3UEJNAAUFYCTJ3E4ON2MYXPLPSIXQ25JZ) |
-| payment_escrow | `CA5S4S7QGHJHJWVJBYL3CXZXZTNGKXMNZVDAEQNN7NUXFP4D7BYK7HIX` | `3861809c…2941ed` | [view](https://stellar.expert/explorer/testnet/contract/CA5S4S7QGHJHJWVJBYL3CXZXZTNGKXMNZVDAEQNN7NUXFP4D7BYK7HIX) |
+| device_registry | `CAC4KOLHDLDYDWBOKXNKRN5KVHO56PLOIFXDLTBUWGVN6GVDEB7FQHU5` | `f2c758eb…580d55` | [view](https://stellar.expert/explorer/testnet/contract/CAC4KOLHDLDYDWBOKXNKRN5KVHO56PLOIFXDLTBUWGVN6GVDEB7FQHU5) |
+| agent_registry | `CCMZDSPTLX7IIJWCYEUM5DJUHOSOYSTHGK777S2TXZWEMC5ZZGPJ3EBV` | `06402417…1c84ab` | [view](https://stellar.expert/explorer/testnet/contract/CCMZDSPTLX7IIJWCYEUM5DJUHOSOYSTHGK777S2TXZWEMC5ZZGPJ3EBV) |
+| payment_escrow | `CC7EAW5FNJEDBS7THM5IT6XIOHO4AOYMLXT3KSZ3HWUIKEACTW7E5BFS` | `e430f8ab…73a0a2` | [view](https://stellar.expert/explorer/testnet/contract/CC7EAW5FNJEDBS7THM5IT6XIOHO4AOYMLXT3KSZ3HWUIKEACTW7E5BFS) |
 
-> **About redeployment:** each `./scripts/redeploy-contracts.sh` run deploys **fresh contract instances**, so every deploy produces **new contract IDs** — a redeploy is a clean slate, not an in-place upgrade (prior on-chain state on the old instances is abandoned). The script writes the authoritative IDs, WASM hashes, and init args to a timestamped evidence file in [`deploy-evidence/`](deploy-evidence/), and when run with `UPDATE_ENV=1` it also patches `frontend/.env`. The IDs above are from the latest run ([`deploy-evidence/deploy-testnet-20261007T050558Z.md`](deploy-evidence/deploy-testnet-20261007T050558Z.md)); on-chain evidence screenshots are in [`docs/Evidence/`](docs/Evidence/README.md).
+> **About redeployment:** each `./scripts/redeploy-contracts.sh` run deploys **fresh contract instances**, so every deploy produces **new contract IDs** — a redeploy is a clean slate, not an in-place upgrade (prior on-chain state on the old instances is abandoned). The script writes the authoritative IDs, WASM hashes, and init args to a timestamped evidence file in [`deploy-evidence/`](deploy-evidence/), and when run with `UPDATE_ENV=1` it also patches `frontend/.env`. The IDs above are from the latest run ([`deploy-evidence/deploy-testnet-20261024T131024Z.md`](deploy-evidence/deploy-testnet-20261024T131024Z.md)); explorer captures of all three contracts are in [`docs/Evidence/week4-security/`](docs/Evidence/week4-security/README.md), earlier screenshots in [`docs/Evidence/`](docs/Evidence/README.md).
 
 > Full deployment evidence (admin, init args, WASM hashes): [`deploy-evidence/`](deploy-evidence/).
 
-> [!WARNING]
-> The contract source is ahead of these deployments. The Week 4 security fixes (2026-10-21) are not on Testnet yet; redeploy before relying on the IDs above. See [`docs/contracts.md`](docs/contracts.md#week-4-security-fixes) and the [Week 4 evidence package](docs/evidence-package.md).
+> [!NOTE]
+> These IDs run the Week 4 security fixes (cross-asset drain, agent hijack, revoked-device payment, expiring pending payments, unregistered-device funding). The guarded [live security matrix](docs/testing.md#live-security-matrix) passed all 20 outcomes against them, and the app's [live Testnet flow](deploy-evidence/week2-testnet-flow-20261024T131654Z.md) was re-run on them. The 2026-10-07 IDs are retired: they run pre-fix code, and old device links, policies and balances do not carry over. Details: [`docs/contracts.md`](docs/contracts.md#week-4-security-fixes) · [Week 4 evidence package](docs/evidence-package.md).
 
 **Mainnet Contract IDs** (deployed 2026-07-18):
 
@@ -169,36 +169,37 @@ Errors: `AlreadyInitialized=1`, `DeviceNotFound=2`, `NotOwner=3`, `AlreadyRegist
 #### agent_registry
 | Method | Args | Auth | Description |
 |--------|------|------|-------------|
-| `initialize` | `admin: Address` | `admin` | Set contract admin (called once) |
-| `register_agent` | `wallet: Address, device_hash: BytesN<32>, agent: Address, max_amount: i128, asset: Address, expires_at: u64` | `wallet` | Authorize an agent under a constrained policy |
-| `revoke_agent` | `wallet: Address, device_hash: BytesN<32>` | `wallet` | Revoke agent access |
+| `initialize` | `admin: Address, device_registry_id: Address` | `admin` | Set admin + link the device registry (called once) |
+| `register_agent` | `wallet: Address, device_hash: BytesN<32>, agent: Address, max_amount: i128, asset: Address, expires_at: u64` | `wallet` (must own the device) | Authorize an agent under a constrained policy; replaces a policy left by a previous owner |
+| `revoke_agent` | `wallet: Address, device_hash: BytesN<32>` | policy owner | Revoke agent access |
 | `get_agent` | `device_hash: BytesN<32>` | — | Look up agent by device hash |
-| `get_policy` | `device_hash: BytesN<32>` | — | Returns `AgentPolicy { agent, max_amount, asset, expires_at }` |
+| `get_policy` | `device_hash: BytesN<32>` | — | Returns `AgentPolicy { owner, agent, max_amount, asset, expires_at }` |
 | `is_auth` | `device_hash: BytesN<32>, agent: Address` | — | Agent matches and authorization has not expired |
 | `check_payment` | `device_hash: BytesN<32>, agent: Address, asset: Address, amount: i128` | — | Full policy predicate: agent + asset + `amount > 0` + within cap + not expired |
 
 `max_amount = 0` means uncapped; `expires_at = 0` means never expires (otherwise an absolute ledger timestamp).
 
-Errors: `AlreadyInitialized=1`, `AgentNotFound=2`, `AlreadyRegistered=3`, `InvalidPolicy=4`.
+Errors: `AlreadyInitialized=1`, `AgentNotFound=2`, `AlreadyRegistered=3`, `InvalidPolicy=4`, `NotOwner=5`.
 
 #### payment_escrow
 | Method | Args | Auth | Description |
 |--------|------|------|-------------|
 | `initialize` | `admin: Address, agent_registry_id: Address, device_registry_id: Address` | `admin` | Set admin + link both registries |
-| `fund_escrow` | `token: Address, wallet: Address, device_hash: BytesN<32>, amount: i128` | `wallet` | Deposit into escrow for a device |
+| `fund_escrow` | `token: Address, wallet: Address, device_hash: BytesN<32>, amount: i128` | `wallet` | Deposit into escrow for a registered device; the first deposit fixes the escrow's token |
 | `authorize` | `agent: Address, device_hash: BytesN<32>, merchant: Address, asset: Address, amount: i128, nonce: u64` | `agent` | Instant payment auth, enforced against the agent policy with nonce replay protection |
 | `claim` | `token: Address, merchant: Address` | `merchant` | Batch-claim all pending payments |
 | `defund_escrow` | `token: Address, device_hash: BytesN<32>, amount: i128` | device owner | Wallet reclaims unused escrow funds |
 | `sweep_on_revoke` | `token: Address, device_hash: BytesN<32>, agent: Address` | device owner | After the agent is revoked, return the device's entire escrow balance to the owner |
+| `escrow_token` | `device_hash: BytesN<32>` | — | Token the device's escrow is held in (`None` if never funded) |
 | `balance_of` | `device_hash: BytesN<32>` | — | Check escrow balance |
 | `pending_balance` | `merchant: Address` | — | Check unclaimed payments |
 
-Errors: `AlreadyInitialized=1`, `InsufficientBalance=2`, `AgentNotAuthorized=3`, `NotDeviceOwner=4`, `NothingToClaim=5`, `DuplicateAuth=6`, `AgentStillActive=7`.
+Errors: `AlreadyInitialized=1`, `InsufficientBalance=2`, `AgentNotAuthorized=3`, `NotDeviceOwner=4`, `NothingToClaim=5`, `DuplicateAuth=6`, `AgentStillActive=7`, `DeviceNotRegistered=8`, `InvalidAsset=9`, `InvalidRecipient=10`, `InvalidAmount=11`.
 
 ## Project Structure
 
 ```
-Noir_Wallet/
+noir/
 ├── frontend/                # React Native Expo application
 │   └── src/
 │       ├── screens/         # Dashboard, POS, Device Provisioning, Agents, etc.
@@ -279,18 +280,18 @@ Noir Wallet notifies you when money **arrives** at your main wallet or at any ca
 > Full guides: **[Installation](docs/installation.md)** · **[Deployment](docs/deployment.md)** · **[Walkthrough](docs/walkthrough.md)** · **[Contract reference](docs/contracts.md)** · **[API reference](docs/api-reference.md)** · **[NFC hardware](docs/nfc-hardware.md)** · **[Testing](docs/testing.md)**. The summary below is the short version.
 
 ### Prerequisites
-- Node.js 26+
+- Node.js 22.23.4+, 24.22.1+ or 26.12.1+ (patched releases; [`.nvmrc`](.nvmrc) pins 22.23.4)
 - Expo CLI (`npm install -g expo-cli`)
-- iOS Simulator (macOS) or Android Emulator / device
+- Android device with NFC (or an Android emulator for non-NFC screens)
 - Stellar testnet wallet (Freighter extension or custom)
-- Rust toolchain (for contract development)
+- Rust toolchain + [Stellar CLI](https://developers.stellar.org/docs/tools/developer-tools/cli/install-cli) (for contract development)
 
 ### Setup
 
 ```bash
 # Clone and install
-git clone https://github.com/rylsherdamz-rgb/Noir_Wallet.git
-cd Noir_Wallet/frontend
+git clone https://github.com/noirx402/noir.git
+cd noir/frontend
 npm install
 ```
 
@@ -300,9 +301,9 @@ Copy `.env.example` to `.env` and configure:
 
 | Variable | Description | Current Value |
 |----------|-------------|---------------|
-| `EXPO_PUBLIC_DEVICE_REGISTRY_CONTRACT` | Soroban device registry contract ID | `CB4DPMGOA374JIB2ZVD4AHW5GJKQUYNOFGRYNOJ75EFH2KCJSMHOWIRA` |
-| `EXPO_PUBLIC_AGENT_REGISTRY_CONTRACT` | Soroban agent registry contract ID | `CBTDMJVCFQDIVWZBKAKZ2FQ3UEJNAAUFYCTJ3E4ON2MYXPLPSIXQ25JZ` |
-| `EXPO_PUBLIC_PAYMENT_ESCROW_CONTRACT` | Soroban payment escrow contract ID | `CA5S4S7QGHJHJWVJBYL3CXZXZTNGKXMNZVDAEQNN7NUXFP4D7BYK7HIX` |
+| `EXPO_PUBLIC_DEVICE_REGISTRY_CONTRACT` | Soroban device registry contract ID | `CAC4KOLHDLDYDWBOKXNKRN5KVHO56PLOIFXDLTBUWGVN6GVDEB7FQHU5` |
+| `EXPO_PUBLIC_AGENT_REGISTRY_CONTRACT` | Soroban agent registry contract ID | `CCMZDSPTLX7IIJWCYEUM5DJUHOSOYSTHGK777S2TXZWEMC5ZZGPJ3EBV` |
+| `EXPO_PUBLIC_PAYMENT_ESCROW_CONTRACT` | Soroban payment escrow contract ID | `CC7EAW5FNJEDBS7THM5IT6XIOHO4AOYMLXT3KSZ3HWUIKEACTW7E5BFS` |
 | `EXPO_PUBLIC_STELLAR_MASTER_KEY_ID` | Stellar master key ID | (configure per deployment) |
 | `EXPO_PUBLIC_CHANNEL_SECRET_KEY` | Fee channel secret | (configure per deployment) |
 | `EXPO_PUBLIC_ISSUER_ADDRESS` | Asset issuer address | (configure per deployment) |
@@ -323,37 +324,38 @@ NFC needs native code, so Expo Go and emulators can't link or tap cards. On an N
 ```bash
 cd backend
 
-# Build all WASM
-cargo build --release --target wasm32v1-none -p device-registry -p agent-registry -p payment-escrow
+# Build all WASM (escrow imports the two registries, so build them first)
+cargo build --release --target wasm32v1-none -p device-registry -p agent-registry
+cargo build --release --target wasm32v1-none -p payment-escrow
 
 # Run checks (host target)
 cargo check -p device-registry -p agent-registry -p payment-escrow
 
 # Deploy to testnet (one per contract)
-soroban contract deploy \
+stellar contract deploy \
   --wasm target/wasm32v1-none/release/device_registry.wasm \
-  --network testnet
+  --source <IDENTITY> --network testnet
 
-soroban contract deploy \
+stellar contract deploy \
   --wasm target/wasm32v1-none/release/agent_registry.wasm \
-  --network testnet
+  --source <IDENTITY> --network testnet
 
-soroban contract deploy \
+stellar contract deploy \
   --wasm target/wasm32v1-none/release/payment_escrow.wasm \
-  --network testnet
+  --source <IDENTITY> --network testnet
 
 # Initialize contracts
-soroban contract invoke --id <DEVICE_REGISTRY_ID> --network testnet -- \
+stellar contract invoke --id <DEVICE_REGISTRY_ID> --source <IDENTITY> --network testnet -- \
   initialize --admin <ADMIN_ADDR>
 
-soroban contract invoke --id <AGENT_REGISTRY_ID> --network testnet -- \
-  initialize --admin <ADMIN_ADDR>
+stellar contract invoke --id <AGENT_REGISTRY_ID> --source <IDENTITY> --network testnet -- \
+  initialize --admin <ADMIN_ADDR> --device_registry_id <DEVICE_REGISTRY_ID>
 
-soroban contract invoke --id <ESCROW_ID> --network testnet -- \
+stellar contract invoke --id <ESCROW_ID> --source <IDENTITY> --network testnet -- \
   initialize --admin <ADMIN_ADDR> --agent_registry_id <AGENT_REGISTRY_ID> --device_registry_id <DEVICE_REGISTRY_ID>
 ```
 
-Build `agent-registry` and `device-registry` before `payment-escrow` (it imports their WASM). Or run all of this with `./scripts/redeploy-contracts.sh`; see the [Deployment guide](docs/deployment.md).
+Initialize in this order: device_registry, then agent_registry, then payment_escrow. Or run all of this with `./scripts/redeploy-contracts.sh`; see the [Deployment guide](docs/deployment.md).
 
 ### Run Tests
 

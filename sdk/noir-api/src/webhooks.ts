@@ -4,7 +4,7 @@ import { isIP } from 'node:net'
 import {
   eventToJSON, normalizeDeviceHash, signWebhookBody, NOIR_EVENT_TYPES, SIGNATURE_HEADER,
   type NoirAgentClient, type NoirEvent, type NoirEventType,
-} from '@noir-wallet/agent-sdk'
+} from '@noirx402/agent-sdk'
 
 export interface Subscription {
   id: string

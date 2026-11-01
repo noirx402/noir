@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Noir RPS</title>
+  <link rel="icon" href="/noir-mark.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap" />
+</head>
+<body>
+  <header>
+    <div class="brand"><img class="mark" src="/noir-mark.png" alt="" /> NOIR <span class="sep">/</span> Rock · Paper · Scissors</div>
+    <span class="badge">Stellar Testnet</span>
+  </header>
+
+  <main>
+    <section class="panel" aria-labelledby="wallet-h">
+      <h2 id="wallet-h">Wallet</h2>
+      <div id="wallet"></div>
+    </section>
+
+    <section class="panel table" aria-labelledby="table-h">
+      <h2 id="table-h">The table</h2>
+      <div class="row"><span class="label">House</span><span id="house" class="mono">…</span></div>
+      <div class="row"><span class="label">House bank</span><span id="house-balance" class="mono">…</span></div>
+      <p class="muted small">Win pays 2×, a draw returns your stake. Free test XLM only.</p>
+
+      <h3>Stake</h3>
+      <div id="stakes" class="chips"></div>
+
+      <h3>Your move</h3>
+      <div id="moves" class="moves"></div>
+
+      <p id="status" class="status" role="status" aria-live="polite">Connect Noir to play.</p>
+      <p class="muted small">House commitment <span id="commit" class="mono commit">none yet</span></p>
+    </section>
+
+    <section class="panel" aria-labelledby="result-h">
+      <h2 id="result-h">Result <span id="score" class="score"></span></h2>
+      <div id="result"><p class="muted">No rounds yet.</p></div>
+      <ul id="history" class="history"></ul>
+    </section>
+  </main>
+
+  <footer class="muted small">
+    Built with <code>@noirx402/agent-sdk</code> and the Noir browser extension.
+    The house commits to its move before you pay, so every round can be checked.
+  </footer>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

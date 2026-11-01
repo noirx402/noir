@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
-import { NoirContractError, TESTNET, type NoirOperation } from '@noir-wallet/agent-sdk'
+import { NoirContractError, TESTNET, type NoirOperation } from '@noirx402/agent-sdk'
 import { createApp, type NoirApiClient } from '../src/app.js'
 import { generateKey, KeyStore } from '../src/keys.js'
 import { RateLimiter } from '../src/ratelimit.js'

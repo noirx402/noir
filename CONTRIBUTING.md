@@ -26,8 +26,8 @@ For anything larger than a small fix, open an issue first so we can align on app
 ### Frontend (React Native / Expo)
 
 ```bash
-git clone https://github.com/rylsherdamz-rgb/Noir_Wallet.git
-cd Noir_Wallet/frontend
+git clone https://github.com/noirx402/noir.git
+cd noir/frontend
 npm install
 cp .env.example .env      # fill in contract IDs (see README env table)
 npx expo start

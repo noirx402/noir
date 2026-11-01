@@ -10,10 +10,10 @@ export default function Quickstart() {
     <DocPage slug="quickstart">
       <h2 id="sdk">Option A — the SDK</h2>
       <p>Install it next to the Stellar SDK:</p>
-      <CodeBlock lang="bash" code="npm install @noir-wallet/agent-sdk @stellar/stellar-sdk" />
+      <CodeBlock lang="bash" code="npm install @noirx402/agent-sdk @stellar/stellar-sdk" />
       <p>Read a card’s policy and ask the contract whether a payment would go through. Reads need no account and no key.</p>
       <CodeBlock title="check.ts" lang="ts" code={`
-import { NoirAgentClient } from '@noir-wallet/agent-sdk'
+import { NoirAgentClient } from '@noirx402/agent-sdk'
 
 const noir = new NoirAgentClient() // Noir's Testnet contracts are built in
 
@@ -33,7 +33,7 @@ if (policy) {
       <h2 id="api">Option B — the REST API</h2>
       <p>Run the gateway (or use one your team hosts) and create a key:</p>
       <CodeBlock lang="bash" code={`
-git clone https://github.com/rylsherdamz-rgb/Noir_Wallet && cd Noir_Wallet/sdk/noir-api
+git clone https://github.com/noirx402/noir && cd noir/sdk/noir-api
 npm run setup && npm run build
 npm run keygen -- my-shop --scopes read,write,webhooks   # prints noir_sk_… once
 npm start                                                 # http://localhost:8787

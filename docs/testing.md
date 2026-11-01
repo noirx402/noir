@@ -12,11 +12,11 @@ How to run every test suite, what each one covers, and which test proves each SO
 | Agent SDK | `npm test` in `sdk/agent-sdk/` | 18 passed; live suites skipped (`npm run test:testnet`, `npm run test:security-matrix`) |
 | REST gateway | `npm test` in `sdk/noir-api/` (after `npm run setup`) | 18 passed |
 | Live Testnet flow | `npm run test:testnet` in `frontend/` | passing; last evidence [`week2-testnet-flow-20261009T044804Z.md`](../deploy-evidence/week2-testnet-flow-20261009T044804Z.md) |
-| Live security matrix | `npm run test:security-matrix` in `sdk/agent-sdk/` | **not yet run** — needs the post-fix redeploy; writes `deploy-evidence/week4-security-matrix-*.md` |
+| Live security matrix | `npm run test:security-matrix` in `sdk/agent-sdk/` | **PASS** on the 2026-10-24 redeploy (15 tests, all 20 outcomes) — [`week4-security-matrix-20261024T131458Z.md`](../deploy-evidence/week4-security-matrix-20261024T131458Z.md) |
 
 Full output of this run: [`deploy-evidence/test-results-20261021T034015Z.txt`](../deploy-evidence/test-results-20261021T034015Z.txt). CI runs the contract, app and SDK suites on every push and PR (`contracts.yml`, `frontend.yml`, `sdk.yml`).
 
-The [2026-10-24 source-verification record](../deploy-evidence/issue24-source-verification-20261024T075044Z.md) covers the guarded matrix runner and current offline checks. No redeployment, live suite, or active contract-ID change is part of that work; [issue #24](https://github.com/rylsherdamz-rgb/Noir_Wallet/issues/24) remains open pending live acceptance.
+The [2026-10-24 source-verification record](../deploy-evidence/issue24-source-verification-20261024T075044Z.md) covers the guarded matrix runner and current offline checks. No redeployment, live suite, or active contract-ID change is part of that work; [issue #24](https://github.com/noirx402/noir/issues/24) remains open pending live acceptance.
 
 ## Running the tests
 
@@ -138,7 +138,7 @@ The agent_registry tests use a small mock `device_registry` (`MockDevices`) that
 | Funds never stranded on revoke | `test_sweep_on_revoke_returns_all_funds_to_owner`, `test_sweep_rejected_while_agent_active` | ✅ |
 | Funds never stranded unclaimed | `test_late_claim_still_pays` | ✅ |
 
-These run in CI on every push. The live Testnet versions are in the [security matrix runner](#live-security-matrix); it has not been run yet because it needs the post-fix redeploy.
+These run in CI on every push. The live Testnet versions are in the [security matrix runner](#live-security-matrix); it passed against the 2026-10-24 redeploy ([report](../deploy-evidence/week4-security-matrix-20261024T131458Z.md)).
 
 ## App unit tests (`frontend/tests/`)
 
@@ -179,7 +179,7 @@ Steps: create and import a wallet → Friendbot → simulated NTAG213 UID → `r
 | [`contracts.yml`](../.github/workflows/contracts.yml) | push/PR to `main`, `instaward*` | Pinned Rust `1.98.1` + `wasm32v1-none` → build dependency WASM → build escrow → `cargo test` → WASM hash report (informational) |
 | [`frontend.yml`](../.github/workflows/frontend.yml) | push/PR to `main`, `instaward*` | Node 22.23.4 → `yarn install --frozen-lockfile` → `tsc --noEmit` → `yarn test` |
 
-Run history: [GitHub Actions](https://github.com/rylsherdamz-rgb/Noir_Wallet/actions).
+Run history: [GitHub Actions](https://github.com/noirx402/noir/actions).
 
 Related: [Contract reference](contracts.md) · [Walkthrough](walkthrough.md)
 

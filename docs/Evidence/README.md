@@ -4,7 +4,7 @@ Visual proof that the three Noir Wallet Soroban contracts are deployed,
 initialized, and verifiable on Stellar testnet. These screenshots back the
 contract IDs listed in the [root README](../../README.md#smart-contracts) and
 the machine-readable record in
-[`deploy-evidence/deploy-testnet-20261007T050558Z.md`](../../deploy-evidence/deploy-testnet-20261007T050558Z.md).
+[`deploy-evidence/deploy-testnet-20261024T131024Z.md`](../../deploy-evidence/deploy-testnet-20261024T131024Z.md).
 
 > **Why these IDs change:** each `./scripts/redeploy-contracts.sh` run deploys
 > **fresh contract instances**, so every redeploy mints **new contract IDs** —
@@ -19,9 +19,9 @@ the machine-readable record in
 
 | Contract | ID | Explorer |
 |----------|----|----------|
-| device_registry | `CB4DPMGOA374JIB2ZVD4AHW5GJKQUYNOFGRYNOJ75EFH2KCJSMHOWIRA` | [view](https://stellar.expert/explorer/testnet/contract/CB4DPMGOA374JIB2ZVD4AHW5GJKQUYNOFGRYNOJ75EFH2KCJSMHOWIRA) |
-| agent_registry | `CBTDMJVCFQDIVWZBKAKZ2FQ3UEJNAAUFYCTJ3E4ON2MYXPLPSIXQ25JZ` | [view](https://stellar.expert/explorer/testnet/contract/CBTDMJVCFQDIVWZBKAKZ2FQ3UEJNAAUFYCTJ3E4ON2MYXPLPSIXQ25JZ) |
-| payment_escrow | `CA5S4S7QGHJHJWVJBYL3CXZXZTNGKXMNZVDAEQNN7NUXFP4D7BYK7HIX` | [view](https://stellar.expert/explorer/testnet/contract/CA5S4S7QGHJHJWVJBYL3CXZXZTNGKXMNZVDAEQNN7NUXFP4D7BYK7HIX) |
+| device_registry | `CAC4KOLHDLDYDWBOKXNKRN5KVHO56PLOIFXDLTBUWGVN6GVDEB7FQHU5` | [view](https://stellar.expert/explorer/testnet/contract/CAC4KOLHDLDYDWBOKXNKRN5KVHO56PLOIFXDLTBUWGVN6GVDEB7FQHU5) |
+| agent_registry | `CCMZDSPTLX7IIJWCYEUM5DJUHOSOYSTHGK777S2TXZWEMC5ZZGPJ3EBV` | [view](https://stellar.expert/explorer/testnet/contract/CCMZDSPTLX7IIJWCYEUM5DJUHOSOYSTHGK777S2TXZWEMC5ZZGPJ3EBV) |
+| payment_escrow | `CC7EAW5FNJEDBS7THM5IT6XIOHO4AOYMLXT3KSZ3HWUIKEACTW7E5BFS` | [view](https://stellar.expert/explorer/testnet/contract/CC7EAW5FNJEDBS7THM5IT6XIOHO4AOYMLXT3KSZ3HWUIKEACTW7E5BFS) |
 
 ### WASM SHA-256 hashes
 
@@ -31,9 +31,9 @@ this repo.
 
 | Contract | SHA-256 |
 |----------|---------|
-| device_registry.wasm | `a252a4070120af7222bed4dfcb220ca51c290071f2c286a2f58f7259f367bea2` |
-| agent_registry.wasm | `b0da4885fd635a6b3d76250c9423424c84c409a2e617b76946ffd2af90c7a22b` |
-| payment_escrow.wasm | `3861809c9dfbcc4bf9d9941cc76ebeafb4a7d37453e15074826093d12a2941ed` |
+| device_registry.wasm | `f2c758eb82b5844b333363b5fd793104106dcafa3f570a5c89d59b4bff580d55` |
+| agent_registry.wasm | `064024177246a27709854cc1da45b79be363cd99b84f0d2e74b1b841579c84ab` |
+| payment_escrow.wasm | `e430f8ab443103b75a0821612f8fc91d1e7491ac49b2f1e7ddd7698a8073a0a2` |
 
 ## Wallet create / import (Android)
 

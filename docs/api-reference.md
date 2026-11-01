@@ -6,7 +6,7 @@ Noir exposes four integration layers. Pick the one that fits your app. All of th
 |-------|-------------|-----------|
 | **Soroban contracts** | You call the chain directly (Rust, any Stellar SDK, the CLI) | [Smart contract reference](contracts.md) |
 | **App `x402` module** | You fork or extend the React Native wallet | [Below](#app-x402-module) · [`frontend/src/domain/x402.ts`](../frontend/src/domain/x402.ts) |
-| **`@noir-wallet/agent-sdk`** | A JS/TS app (Node 22.23.4+, browser, React Native) reads policies, checks payments, runs `authorize` → `claim`, or watches events | [Below](#typescript-sdk-noir-walletagent-sdk) · [`sdk/agent-sdk/README.md`](../sdk/agent-sdk/README.md) |
+| **`@noirx402/agent-sdk`** | A JS/TS app (Node 22.23.4+, browser, React Native) reads policies, checks payments, runs `authorize` → `claim`, or watches events | [Below](#typescript-sdk-noirx402agent-sdk) · [`sdk/agent-sdk/README.md`](../sdk/agent-sdk/README.md) |
 | **Noir REST gateway** | A non-JS app, or you want API keys, scopes, rate limits and webhooks | [Below](#rest-gateway-sdknoir-api) · [`sdk/noir-api/README.md`](../sdk/noir-api/README.md) |
 
 Shared conventions: `deviceHash` is the 64-hex-char SHA-256 of the tag UID string ([how](nfc-hardware.md#how-a-tag-becomes-a-device_hash)). Amounts are in the asset's smallest unit (stroops; 1 XLM = `10000000`). Nothing in any layer holds or sends a user's secret key to a server.
@@ -55,14 +55,14 @@ Errors: `DeviceNotLinkedError`, `DeviceOwnedByOtherWalletError`, `InsufficientFu
 
 ---
 
-## TypeScript SDK (`@noir-wallet/agent-sdk`)
+## TypeScript SDK (`@noirx402/agent-sdk`)
 
 ```bash
-npm install @noir-wallet/agent-sdk @stellar/stellar-sdk
+npm install @noirx402/agent-sdk @stellar/stellar-sdk
 ```
 
 ```ts
-import { NoirAgentClient, keypairSigner, toStroops } from '@noir-wallet/agent-sdk'
+import { NoirAgentClient, keypairSigner, toStroops } from '@noirx402/agent-sdk'
 
 const noir = new NoirAgentClient()                        // Testnet contract IDs built in
 

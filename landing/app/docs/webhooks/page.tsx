@@ -38,7 +38,7 @@ curl -X POST $NOIR_API/v1/webhooks -H "Authorization: Bearer $NOIR_KEY" \\
 
       <h2 id="relay">…or run the relay yourself</h2>
       <CodeBlock lang="ts" code={`
-import { NoirAgentClient, startWebhookRelay } from '@noir-wallet/agent-sdk'
+import { NoirAgentClient, startWebhookRelay } from '@noirx402/agent-sdk'
 
 const stop = startWebhookRelay(new NoirAgentClient(), {
   url: 'https://shop.example/noir', secret: process.env.NOIR_WEBHOOK_SECRET!,
@@ -64,7 +64,7 @@ X-Noir-Signature: t=1760342400,v1=5f2b…c9
       <h2 id="verify">Verify the signature</h2>
       <p><code>v1</code> is HMAC-SHA256 of <code>{'`${t}.${rawBody}`'}</code> with your secret, hex-encoded. Verify against the <b>raw</b> body and reject timestamps older than 5 minutes.</p>
       <CodeBlock lang="ts" title="Node / TypeScript" code={`
-import { verifyWebhookSignature } from '@noir-wallet/agent-sdk'
+import { verifyWebhookSignature } from '@noirx402/agent-sdk'
 
 app.post('/noir', express.raw({ type: 'application/json' }), async (req, res) => {
   const raw = req.body.toString('utf8')

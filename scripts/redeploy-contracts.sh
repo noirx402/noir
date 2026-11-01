@@ -72,12 +72,23 @@ info "Building release WASM for all three contracts…"
 )
 ok "Build complete."
 
-DEVICE_WASM="$WASM_DIR/device_registry.wasm"
-AGENT_WASM="$WASM_DIR/agent_registry.wasm"
-ESCROW_WASM="$WASM_DIR/payment_escrow.wasm"
-for f in "$DEVICE_WASM" "$AGENT_WASM" "$ESCROW_WASM"; do
-  [ -f "$f" ] || die "expected WASM not found: $f"
+for f in device_registry agent_registry payment_escrow; do
+  [ -f "$WASM_DIR/$f.wasm" ] || die "expected WASM not found: $WASM_DIR/$f.wasm"
 done
+
+# Shrink the WASM with wasm-opt before uploading: upload fees scale with code
+# size (~25% smaller, ~22 XLM less on mainnet as of 2026-10-22). The raw
+# release WASM stays in place because payment_escrow contractimport!s it.
+info "Optimizing WASM…"
+OPT_DIR="$WASM_DIR/optimized"
+mkdir -p "$OPT_DIR"
+for f in device_registry agent_registry payment_escrow; do
+  stellar contract optimize --wasm "$WASM_DIR/$f.wasm" --wasm-out "$OPT_DIR/$f.wasm" >/dev/null
+done
+DEVICE_WASM="$OPT_DIR/device_registry.wasm"
+AGENT_WASM="$OPT_DIR/agent_registry.wasm"
+ESCROW_WASM="$OPT_DIR/payment_escrow.wasm"
+ok "Optimized: $(wc -c < "$DEVICE_WASM") + $(wc -c < "$AGENT_WASM") + $(wc -c < "$ESCROW_WASM") bytes"
 
 # ---- 2. Hash (evidence) -----------------------------------------------------
 info "Computing WASM SHA-256 hashes…"

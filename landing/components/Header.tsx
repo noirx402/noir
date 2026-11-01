@@ -38,7 +38,7 @@ export function Header() {
 
   // Star count is decoration: shown only when the GitHub API answers.
   useEffect(() => {
-    fetch('https://api.github.com/repos/rylsherdamz-rgb/Noir_Wallet')
+    fetch('https://api.github.com/repos/noirx402/noir')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d && typeof d.stargazers_count === 'number') setStars(d.stargazers_count) })
       .catch(() => {})

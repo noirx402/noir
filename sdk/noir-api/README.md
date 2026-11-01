@@ -3,7 +3,7 @@
 A self-hostable REST gateway in front of Noir's Soroban contracts. Apps that
 aren't written in JavaScript, or that want **API keys, scopes, rate limits and
 managed webhooks**, call this instead of using
-[`@noir-wallet/agent-sdk`](../agent-sdk) directly.
+[`@noirx402/agent-sdk`](../agent-sdk) directly.
 
 It is **non-custodial**: it never sees a secret key. Writes are two calls:
 `prepare` returns an unsigned transaction, your user's wallet (or your agent

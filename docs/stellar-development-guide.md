@@ -270,13 +270,13 @@ stellar contract invoke --id <DEVICE_ID> --network testnet -- initialize --admin
 
 ## 8. Deployed contract IDs
 
-**Testnet** (redeployed 2026-10-07):
+**Testnet** (redeployed 2026-10-24, Week 4 security fixes):
 
 | Contract | ID | WASM SHA-256 |
 |----------|----|--------------|
-| device_registry | `CB4DPMGOA374JIB2ZVD4AHW5GJKQUYNOFGRYNOJ75EFH2KCJSMHOWIRA` | `a252a407…67bea2` |
-| agent_registry | `CBTDMJVCFQDIVWZBKAKZ2FQ3UEJNAAUFYCTJ3E4ON2MYXPLPSIXQ25JZ` | `b0da4885…c7a22b` |
-| payment_escrow | `CA5S4S7QGHJHJWVJBYL3CXZXZTNGKXMNZVDAEQNN7NUXFP4D7BYK7HIX` | `3861809c…2941ed` |
+| device_registry | `CAC4KOLHDLDYDWBOKXNKRN5KVHO56PLOIFXDLTBUWGVN6GVDEB7FQHU5` | `f2c758eb…580d55` |
+| agent_registry | `CCMZDSPTLX7IIJWCYEUM5DJUHOSOYSTHGK777S2TXZWEMC5ZZGPJ3EBV` | `06402417…1c84ab` |
+| payment_escrow | `CC7EAW5FNJEDBS7THM5IT6XIOHO4AOYMLXT3KSZ3HWUIKEACTW7E5BFS` | `e430f8ab…73a0a2` |
 
 The on-chain WASM hash must match the local release build — recompute with
 `sha256sum` to verify the deployed code is exactly what's in this repo. On-chain

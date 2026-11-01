@@ -10,7 +10,10 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "paths": { "@noir-wallet/agent-sdk": ["../sdk/agent-sdk/src/index.ts"] }
+    "paths": {
+      "@noirx402/agent-sdk": ["../sdk/agent-sdk/src/index.ts"],
+      "@stellar/stellar-sdk": ["./node_modules/@stellar/stellar-sdk"]
+    }
   },
-  "include": ["src", "tests", "build.mjs"]
+  "include": ["src", "tests", "build.mjs", "vitest.config.ts"]
 }

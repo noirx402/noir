@@ -4,14 +4,14 @@ The three Soroban contracts in [`backend/contracts/`](../backend/contracts/). Th
 
 | Contract | Source | Tests | Testnet ID (2026-10-07 deploy) |
 |----------|--------|-------|--------------------------------|
-| `device_registry` | [`device_registry/src/lib.rs`](../backend/contracts/device_registry/src/lib.rs) | 10 | [`CB4DPMGOA374JIB2ZVD4AHW5GJKQUYNOFGRYNOJ75EFH2KCJSMHOWIRA`](https://stellar.expert/explorer/testnet/contract/CB4DPMGOA374JIB2ZVD4AHW5GJKQUYNOFGRYNOJ75EFH2KCJSMHOWIRA) |
-| `agent_registry` | [`agent_registry/src/lib.rs`](../backend/contracts/agent_registry/src/lib.rs) | 21 | [`CBTDMJVCFQDIVWZBKAKZ2FQ3UEJNAAUFYCTJ3E4ON2MYXPLPSIXQ25JZ`](https://stellar.expert/explorer/testnet/contract/CBTDMJVCFQDIVWZBKAKZ2FQ3UEJNAAUFYCTJ3E4ON2MYXPLPSIXQ25JZ) |
-| `payment_escrow` | [`payment_escrow/src/lib.rs`](../backend/contracts/payment_escrow/src/lib.rs) | 29 | [`CA5S4S7QGHJHJWVJBYL3CXZXZTNGKXMNZVDAEQNN7NUXFP4D7BYK7HIX`](https://stellar.expert/explorer/testnet/contract/CA5S4S7QGHJHJWVJBYL3CXZXZTNGKXMNZVDAEQNN7NUXFP4D7BYK7HIX) |
+| `device_registry` | [`device_registry/src/lib.rs`](../backend/contracts/device_registry/src/lib.rs) | 10 | [`CAC4KOLHDLDYDWBOKXNKRN5KVHO56PLOIFXDLTBUWGVN6GVDEB7FQHU5`](https://stellar.expert/explorer/testnet/contract/CAC4KOLHDLDYDWBOKXNKRN5KVHO56PLOIFXDLTBUWGVN6GVDEB7FQHU5) |
+| `agent_registry` | [`agent_registry/src/lib.rs`](../backend/contracts/agent_registry/src/lib.rs) | 21 | [`CCMZDSPTLX7IIJWCYEUM5DJUHOSOYSTHGK777S2TXZWEMC5ZZGPJ3EBV`](https://stellar.expert/explorer/testnet/contract/CCMZDSPTLX7IIJWCYEUM5DJUHOSOYSTHGK777S2TXZWEMC5ZZGPJ3EBV) |
+| `payment_escrow` | [`payment_escrow/src/lib.rs`](../backend/contracts/payment_escrow/src/lib.rs) | 29 | [`CC7EAW5FNJEDBS7THM5IT6XIOHO4AOYMLXT3KSZ3HWUIKEACTW7E5BFS`](https://stellar.expert/explorer/testnet/contract/CC7EAW5FNJEDBS7THM5IT6XIOHO4AOYMLXT3KSZ3HWUIKEACTW7E5BFS) |
 
-WASM hashes and deploy transactions: [`deploy-evidence/deploy-testnet-20261007T050558Z.md`](../deploy-evidence/deploy-testnet-20261007T050558Z.md).
+WASM hashes and deploy transactions: [`deploy-evidence/deploy-testnet-20261024T131024Z.md`](../deploy-evidence/deploy-testnet-20261024T131024Z.md).
 
 > [!WARNING]
-> **The source is ahead of the live Testnet deployment.** The Week 4 security fixes (2026-10-21, see [Security fixes](#week-4-security-fixes)) changed `agent_registry.initialize`, added ownership checks and bound escrow balances to their token. They are in the source and tested (60 tests) but **not yet redeployed**. The IDs above run the 2026-10-07 code, which has the bugs listed there. Redeploy before relying on them ([deployment.md](deployment.md)).
+> **Live Testnet runs the Week 4 code.** The security fixes (2026-10-21, see [Security fixes](#week-4-security-fixes)) were redeployed on 2026-10-24 ([deploy record](../deploy-evidence/deploy-testnet-20261024T131024Z.md)) and the live [security matrix passed](../deploy-evidence/week4-security-matrix-20261024T131458Z.md) against these IDs. `agent_registry.initialize` now takes `(admin, device_registry_id)`. The 2026-10-07 IDs are retired: they run the pre-fix code and the matrix refuses them.
 
 ## Conventions
 
@@ -219,17 +219,17 @@ What the policy still does **not** restrict: which merchant an agent pays. Any a
 
 ```bash
 # Read a policy (simulation only, no fee)
-stellar contract invoke --id CBTDMJVCFQDIVWZBKAKZ2FQ3UEJNAAUFYCTJ3E4ON2MYXPLPSIXQ25JZ \
+stellar contract invoke --id CCMZDSPTLX7IIJWCYEUM5DJUHOSOYSTHGK777S2TXZWEMC5ZZGPJ3EBV \
   --source <identity> --network testnet --send=no -- \
   get_policy --device_hash <64-hex-char hash>
 
 # Check whether a payment would pass (amount in stroops)
-stellar contract invoke --id CBTDMJVCFQDIVWZBKAKZ2FQ3UEJNAAUFYCTJ3E4ON2MYXPLPSIXQ25JZ \
+stellar contract invoke --id CCMZDSPTLX7IIJWCYEUM5DJUHOSOYSTHGK777S2TXZWEMC5ZZGPJ3EBV \
   --source <identity> --network testnet --send=no -- \
   check_payment --device_hash <hash> --agent <G…> --asset <SAC C…> --amount 10000000
 
 # Escrow balance
-stellar contract invoke --id CA5S4S7QGHJHJWVJBYL3CXZXZTNGKXMNZVDAEQNN7NUXFP4D7BYK7HIX \
+stellar contract invoke --id CC7EAW5FNJEDBS7THM5IT6XIOHO4AOYMLXT3KSZ3HWUIKEACTW7E5BFS \
   --source <identity> --network testnet --send=no -- \
   balance_of --device_hash <hash>
 ```

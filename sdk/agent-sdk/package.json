@@ -1,27 +1,68 @@
 {
-  "name": "@noir-wallet/agent-sdk",
-  "version": "0.2.0",
+  "name": "@noirx402/agent-sdk",
+  "version": "0.3.0",
   "description": "Read and use Noir agent policies (device registry, agent registry, payment escrow) on Stellar from any app.",
+  "keywords": [
+    "stellar",
+    "soroban",
+    "x402",
+    "nfc",
+    "tap-to-pay",
+    "wallet",
+    "payments",
+    "agent",
+    "escrow",
+    "webhooks"
+  ],
   "license": "MIT",
+  "author": "Richie Christian De Guzman",
+  "homepage": "https://github.com/noirx402/noir/tree/main/sdk/agent-sdk#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/noirx402/noir.git",
+    "directory": "sdk/agent-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/noirx402/noir/issues"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
   },
-  "files": ["dist", "README.md"],
-  "engines": { "node": "^22.23.4 || ^24.22.1 || >=26.12.1" },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": "^22.23.4 || ^24.22.1 || >=26.12.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "npm run clean && tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:testnet": "NOIR_TESTNET=1 vitest run tests/testnet.test.ts",
-    "test:security-matrix": "vitest run tests/security-matrix.testnet.test.ts --testTimeout=180000 --hookTimeout=120000"
+    "test:security-matrix": "vitest run tests/security-matrix.testnet.test.ts --testTimeout=180000 --hookTimeout=120000",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
-  "dependencies": {
+  "peerDependencies": {
     "@stellar/stellar-sdk": "^16.0.1"
   },
   "devDependencies": {
+    "@stellar/stellar-sdk": "^16.0.1",
     "@types/node": "^22.10.0",
     "typescript": "~5.9.3",
     "vitest": "^4.1.9"

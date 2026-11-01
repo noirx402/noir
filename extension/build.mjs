@@ -15,7 +15,7 @@ const common = {
   define: { global: 'globalThis', 'process.env.NODE_ENV': '"production"' },
   alias: {
     // The SDK from this repo, built against this package's single copy of stellar-sdk.
-    '@noir-wallet/agent-sdk': r('../sdk/agent-sdk/src/index.ts'),
+    '@noirx402/agent-sdk': r('../sdk/agent-sdk/src/index.ts'),
     '@stellar/stellar-sdk': r('./node_modules/@stellar/stellar-sdk'),
   },
   logLevel: 'info',

@@ -54,14 +54,15 @@ device's full escrow balance to owner.
 Build order matters: `agent_registry` + `device_registry` WASM before `payment_escrow`
 (it `contractimport!`s them). See `Noir/_Redeploy Contracts.md` for the redeploy runbook.
 
-## Current state (as of 2026-10-21)
+## Current state (as of 2026-10-24)
 
 - **Deployed Testnet Contract IDs** (current — matches `frontend/.env`):
-  - device_registry: `CB4DPMGOA374JIB2ZVD4AHW5GJKQUYNOFGRYNOJ75EFH2KCJSMHOWIRA`
-  - agent_registry: `CBTDMJVCFQDIVWZBKAKZ2FQ3UEJNAAUFYCTJ3E4ON2MYXPLPSIXQ25JZ`
-  - payment_escrow: `CA5S4S7QGHJHJWVJBYL3CXZXZTNGKXMNZVDAEQNN7NUXFP4D7BYK7HIX`
-  - Evidence: `deploy-evidence/deploy-testnet-20261007T050558Z.md` (redeployed
-    2026-10-07; WASM SHA-256 hashes listed there). Deployer/admin unchanged.
+  - device_registry: `CAC4KOLHDLDYDWBOKXNKRN5KVHO56PLOIFXDLTBUWGVN6GVDEB7FQHU5`
+  - agent_registry: `CCMZDSPTLX7IIJWCYEUM5DJUHOSOYSTHGK777S2TXZWEMC5ZZGPJ3EBV`
+  - payment_escrow: `CC7EAW5FNJEDBS7THM5IT6XIOHO4AOYMLXT3KSZ3HWUIKEACTW7E5BFS`
+  - Evidence: `deploy-evidence/deploy-testnet-20261024T131024Z.md` (redeployed
+    2026-10-24 with the Week 4 security fixes; WASM SHA-256 hashes listed there). Deployer/admin
+    unchanged. Screenshots: `docs/Evidence/week4-security/`.
   - **Every redeploy mints brand-new IDs** (clean slate, not an upgrade). After any
     redeploy, grep the repo for the old IDs and propagate the new ones everywhere
     (README, `frontend/.env` + `.env.example`, `docs/stellar-development-guide.md`,
@@ -70,14 +71,12 @@ Build order matters: `agent_registry` + `device_registry` WASM before `payment_e
     PROGRESS.md). `scripts/redeploy-contracts.sh UPDATE_ENV=1` auto-patches `frontend/.env`
     only — the docs above are manual.
 - Contract tests: 60 passing, 0 failed (`cargo test` from `backend/`, 10 + 21 + 29).
-  **Week 4 security fixes (2026-10-21) are in source but NOT redeployed** — the live Testnet
-  contracts still have: cross-asset escrow drain, agent hijack (no ownership check on
-  `register_agent`/`revoke_agent`), revoked device still payable, expiring pending payments,
-  and `fund_escrow` accepting unregistered devices. **Breaking:** `agent_registry.initialize(admin,
-  device_registry_id)`. Details: `docs/contracts.md#week-4-security-fixes`.
+  Week 4 security fixes (2026-10-21) are **live** since the 2026-10-24 redeploy. **Breaking:**
+  `agent_registry.initialize(admin, device_registry_id)`. Details: `docs/contracts.md#week-4-security-fixes`.
 - Live security matrix: `cd sdk/agent-sdk && npm run test:security-matrix` (override IDs with
-  `NOIR_DEVICE_REGISTRY`/`NOIR_AGENT_REGISTRY`/`NOIR_PAYMENT_ESCROW`). Not yet run.
-- Frontend: `tsc --noEmit` clean, Vitest 306/306 passing (as of 2026-10-21). SDK 18, gateway 18
+  `NOIR_DEVICE_REGISTRY`/`NOIR_AGENT_REGISTRY`/`NOIR_PAYMENT_ESCROW`). **PASS** on 2026-10-24
+  (`deploy-evidence/week4-security-matrix-20261024T131458Z.md`).
+- Frontend: `tsc --noEmit` clean, Vitest 306/306 passing (as of 2026-10-24). SDK 18, gateway 18
   (gateway needs `npm run setup` first — it depends on the built SDK).
   `npm run test:testnet` (opt-in, live Testnet) runs the Week 2 path through the app's own
   `x402` code and writes tx evidence to `deploy-evidence/week2-testnet-flow-*.md` — passing.
@@ -95,14 +94,15 @@ Build order matters: `agent_registry` + `device_registry` WASM before `payment_e
 
 | # | Deliverable | Status |
 |---|-------------|--------|
-| 1 | Soroban contracts (device/agent/escrow registry) | 🟡 Week 1–2 core logic + tests done; redeployed 2026-10-07 |
+| 1 | Soroban contracts (device/agent/escrow registry) | ✅ Week 4 fixes live; redeployed 2026-10-24, security matrix PASS |
 | 2 | React Native wallet (Android) | 🟡 register+associate+auth working on Testnet; agent-policy UI, escrow fund/withdraw, safe unlink wired + unit-tested (2026-10-07), Testnet + on-device run pending |
 | 3 | Docs & MIT release | 🟡 architecture.md, AI build guide, dev guide, evidence pack started; not finalized |
 
 ### Open items (don't re-derive these — just pick up here)
 
 - **Week 4 next steps** are in `docs/evidence-package.md#5-remaining-steps-maintainer-needs-testnet-access-and-a-phone`:
-  redeploy → run security matrix on new IDs → propagate IDs → `npm run test:testnet` → demo video → tag release.
+  redeploy ✅ → security matrix ✅ → propagate IDs ✅ → `npm run test:testnet` ✅ (all 2026-10-24)
+  → build/publish APK with the new IDs → demo video re-shoot → tag release.
 - Week 1–2 Testnet/evidence gaps closed 2026-10-09 (deploy tx hashes, wallet create/import
   screenshots in `docs/Evidence/wallet/`, Week 2 live run). The Android emulator image does
   not trust `*.stellar.org`'s Sectigo chain — use Node or hardware for anything networked.

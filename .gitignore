@@ -75,3 +75,7 @@ skills-lock.json
 
 # graphify local knowledge-graph index (rebuild with: graphify update)
 .graphify/
+
+# Vercel CLI link + pulled OIDC token (vercel link)
+.vercel
+.env.local

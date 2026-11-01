@@ -4,7 +4,7 @@
 extension plus an Android app that links NFC cards to Soroban contracts for tap-to-pay. It
 was built under a Stellar Community Fund Instaward.
 
-- Chrome Web Store: CHROME_WEB_STORE_URL
+- Chrome Web Store: https://chromewebstore.google.com/detail/noir/gikfhchijjljpbhokmdmaadgmpbchmjl
 - Source: https://github.com/noirx402/noir (extension in `extension/`)
 
 ### What this adds

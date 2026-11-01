@@ -4,7 +4,7 @@ import { Icon } from '@/components/Icons'
 import { CodeBlock } from '@/components/CodeBlock'
 import { JsonLd } from '@/components/JsonLd'
 import {
-  APK_URL, BETA_FORM_URL, BETA_POST_ON_X, CONTRACTS, DEMO_ON_X, DESCRIPTION, RELEASE_LABEL, RELEASE_URL, REPO, REPO_BLOB, SITE_NAME, SITE_URL, asset,
+  APK_URL, BETA_FORM_URL, EXTENSION_STORE_URL, BETA_POST_ON_X, CONTRACTS, DEMO_ON_X, DESCRIPTION, RELEASE_LABEL, RELEASE_URL, REPO, REPO_BLOB, SITE_NAME, SITE_URL, asset,
 } from '@/lib/site'
 
 export const metadata: Metadata = { alternates: { canonical: `${SITE_URL}/` } }
@@ -76,6 +76,7 @@ export default function Home() {
             </p>
             <div className="hero-actions">
               <a className="btn btn-gold" href={APK_URL} download>Download for Android</a>
+              <a className="btn btn-ghost" href={EXTENSION_STORE_URL} target="_blank" rel="noopener">Add to Chrome</a>
               <Link className="btn btn-ghost" href="/docs/">Build with Noir</Link>
             </div>
             <p className="dl-note">
@@ -444,6 +445,7 @@ export default function Home() {
           <div className="hero-actions">
             <a className="btn btn-gold" href={APK_URL} download>Download for Android</a>
             <a className="btn btn-ghost" href={BETA_FORM_URL} target="_blank" rel="noopener"><Icon name="play" size="xs" />Join the Google Play beta</a>
+            <a className="btn btn-ghost" href={EXTENSION_STORE_URL} target="_blank" rel="noopener">Add Noir to Chrome</a>
             <a className="btn btn-ghost" href={REPO} target="_blank" rel="noopener">Explore the repo</a>
           </div>
           <p className="dl-note">{RELEASE_LABEL} · Stellar Testnet · Android APK · <a href={RELEASE_URL} target="_blank" rel="noopener">Release notes</a></p>

@@ -6,6 +6,8 @@ provider at `window.noir.stellar`. It ships with a
 [Stellar Wallets Kit](https://github.com/Creit-Tech/Stellar-Wallets-Kit) module
 (`kit-module/`) so dApps using the kit get Noir in their wallet list.
 
+**Install:** [Noir on the Chrome Web Store](https://chromewebstore.google.com/detail/noir/gikfhchijjljpbhokmdmaadgmpbchmjl)
+
 - **Same wallet as the app.** Import the Noir app's 12-word phrase: SEP-5
   derivation (`m/44'/148'/0'`) gives the same address.
 - **Encrypted at rest.** The phrase is sealed with AES-256-GCM under a

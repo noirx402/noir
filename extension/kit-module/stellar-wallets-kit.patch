@@ -189,7 +189,7 @@ index 0000000..876f0c0
 +
 +  productId: string = NOIR_ID;
 +  productName: string = "Noir";
-+  productUrl: string = "https://noirx402.github.io/noir/";
++  productUrl: string = "https://chromewebstore.google.com/detail/noir/gikfhchijjljpbhokmdmaadgmpbchmjl";
 +  productIcon: string = NOIR_ICON;
 +
 +  async isAvailable(): Promise<boolean> {

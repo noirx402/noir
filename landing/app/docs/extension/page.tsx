@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { DocPage } from '@/components/DocPage'
 import { CodeBlock } from '@/components/CodeBlock'
 import { docMetadata } from '@/lib/docs'
-import { EXTENSION_RELEASE, EXTENSION_ZIP, REPO } from '@/lib/site'
+import { EXTENSION_STORE_URL, REPO } from '@/lib/site'
 
 export const metadata = docMetadata('extension')
 
@@ -33,12 +33,10 @@ export default function Extension() {
       </p>
 
       <h2 id="install">Install</h2>
-      <ol className="doc-list doc-steps">
-        <li><a href={EXTENSION_ZIP}>Download noir-wallet-extension-0.1.0.zip</a> and unzip it (<a href={EXTENSION_RELEASE} target="_blank" rel="noopener">release notes</a>).</li>
-        <li>Open <code>chrome://extensions</code> and turn on <b>Developer mode</b>.</li>
-        <li>Click <b>Load unpacked</b> and choose the unzipped folder. A Chrome Web Store listing is coming soon.</li>
-      </ol>
-      <p>Or build it from source:</p>
+      <p>
+        <a className="btn btn-gold" href={EXTENSION_STORE_URL} target="_blank" rel="noopener">Add Noir to Chrome</a>
+      </p>
+      <p>Install it from the <a href={EXTENSION_STORE_URL} target="_blank" rel="noopener">Chrome Web Store</a>, then pin Noir from the puzzle-piece menu. Or build it from source and load it unpacked:</p>
       <CodeBlock lang="bash" code={`
 cd extension
 npm ci && npm run build
@@ -46,7 +44,7 @@ npm ci && npm run build
 `} />
 
       <h2 id="kit">With the Stellar Wallets Kit</h2>
-      <p>Noir ships a kit module, so it appears next to Freighter, xBull and the rest:</p>
+      <p>Noir ships a kit module, so it appears next to Varial, xBull and the rest:</p>
       <CodeBlock lang="ts" code={`
 import { StellarWalletsKit } from '@creit-tech/stellar-wallets-kit'
 import { defaultModules } from '@creit-tech/stellar-wallets-kit/modules/utils'

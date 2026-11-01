@@ -20,10 +20,8 @@ export const RELEASE_TAG = 'Beta-Testing'
 export const RELEASE_LABEL = 'Beta 1.0.0'
 export const RELEASE_URL = `${REPO}/releases/tag/${RELEASE_TAG}`
 export const APK_URL = `${REPO}/releases/download/${RELEASE_TAG}/app-release.apk`
-/** Noir browser extension (GitHub release until the Chrome Web Store listing is live). */
-export const EXTENSION_TAG = 'extension-v0.1.0'
-export const EXTENSION_ZIP = `${REPO}/releases/download/${EXTENSION_TAG}/noir-wallet-extension-0.1.0.zip`
-export const EXTENSION_RELEASE = `${REPO}/releases/tag/${EXTENSION_TAG}`
+/** Noir browser extension on the Chrome Web Store (item gikfhchijjljpbhokmdmaadgmpbchmjl). */
+export const EXTENSION_STORE_URL = 'https://chromewebstore.google.com/detail/noir/gikfhchijjljpbhokmdmaadgmpbchmjl'
 export const DEMO_ON_X = 'https://x.com/Noirx402/status/2109282993588334632'
 /** Google Play closed-beta sign-up (Google Form) and its announcement post. */
 export const BETA_FORM_URL = 'https://forms.gle/8tA3qwUVwnKEKikY6'

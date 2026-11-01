@@ -54,7 +54,7 @@ export class NoirModule implements ModuleInterface {
 
   productId: string = NOIR_ID;
   productName: string = "Noir";
-  productUrl: string = "https://noirx402.github.io/noir/";
+  productUrl: string = "https://chromewebstore.google.com/detail/noir/gikfhchijjljpbhokmdmaadgmpbchmjl";
   productIcon: string = NOIR_ICON;
 
   async isAvailable(): Promise<boolean> {

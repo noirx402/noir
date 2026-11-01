@@ -31,8 +31,8 @@ gh repo fork --remote && git push -u origin feat/noir-wallet-module
 gh pr create -R Creit-Tech/Stellar-Wallets-Kit --title "feat: add Noir wallet module" --body-file /path/to/noir/extension/kit-module/PR_BODY.md
 ```
 
-Set `productUrl` (step 1 below) in both `extension/kit-module/noir.module.ts`
-and the patch first, so the PR ships the store link.
+`productUrl` already points at the Chrome Web Store listing in both
+`noir.module.ts` and the patch.
 
 The patch:
 
@@ -54,9 +54,8 @@ import { NoirModule } from "@creit-tech/stellar-wallets-kit/modules/noir";
 
 The maintainers review modules for wallets people can install. Do these first:
 
-1. Publish the extension on the Chrome Web Store, then set `productUrl` in
-   `noir.module.ts` to its store page (it currently points at the Noir site),
-   and replace `CHROME_WEB_STORE_URL` in `PR_BODY.md`.
+1. ~~Publish on the Chrome Web Store~~ Done: `productUrl` and `PR_BODY.md`
+   point at the listing (item `gikfhchijjljpbhokmdmaadgmpbchmjl`).
 2. Optionally host the icon and use a URL, like most modules
    (`https://stellar.creit.tech/wallet-icons/...`); the module embeds a 1.7 KB
    PNG data URI today, as GHOSTSIG does.

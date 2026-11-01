@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+Completes `device_registry` coverage (every public function except the admin-only `initialize`).
+
+- `getDevice(deviceHash)` returns `{ owner, agent, active, createdAt }` (or `null`) from `get_device`.
+- `isDeviceAuthorized(deviceHash, agent)` wraps `is_authorized`: linked agent and device active.
+- `parseDeviceInfo(scVal)` and the `NoirDeviceInfo` type are exported for apps that read `get_device` themselves.
+
 ## 0.3.0
 
 Targets the Week 4 contracts redeployed to Testnet on 2026-10-24. **Upgrade from 0.2.0:**

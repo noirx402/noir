@@ -19,6 +19,18 @@ export interface NoirAgentPolicy {
   expiresAt: Date | null
 }
 
+/** A device's record in device_registry. */
+export interface NoirDeviceInfo {
+  /** Wallet that registered the device. */
+  owner: string
+  /** Agent key linked to the device at registration. */
+  agent: string
+  /** True while the device is usable (on-chain `status === 0`). */
+  active: boolean
+  /** When the device was registered, or null if the ledger time is missing. */
+  createdAt: Date | null
+}
+
 export type PaymentRefusal =
   | 'no_agent' | 'wrong_agent' | 'wrong_asset' | 'invalid_amount' | 'over_limit' | 'expired' | 'insufficient_escrow'
 
@@ -147,6 +159,22 @@ export class NoirAgentClient {
       asset: String(p.asset),
       expiresAt: exp === 0n ? null : new Date(Number(exp) * 1000),
     }
+  }
+
+  /** The device's full record (owner, agent, active, registration time), or null when not registered. */
+  async getDevice(deviceHash: string): Promise<NoirDeviceInfo | null> {
+    const val = await this.read('deviceRegistry', 'get_device', [deviceHashScVal(deviceHash)], ['DeviceNotFound'])
+    return val ? parseDeviceInfo(val) : null
+  }
+
+  /**
+   * device_registry.is_authorized: true when `agent` is the device's linked
+   * agent and the device is active. False for unknown devices. This is the
+   * device-side check; spend limits live in `checkPayment`.
+   */
+  async isDeviceAuthorized(deviceHash: string, agent: string): Promise<boolean> {
+    const val = await this.read('deviceRegistry', 'is_authorized', [deviceHashScVal(deviceHash), new Address(agent).toScVal()])
+    return scValToNative(val!) === true
   }
 
   /** The wallet that owns the device, or null when the device is not registered. */
@@ -402,6 +430,18 @@ export class NoirAgentClient {
     }
     if (!sim.result) throw new Error(`${contract}.${method} returned no result`)
     return sim.result.retval
+  }
+}
+
+/** Decodes a device_registry `DeviceInfo` ScVal. */
+export function parseDeviceInfo(val: xdr.ScVal): NoirDeviceInfo {
+  const d = scValToNative(val) as { owner: string; agent: string; status: number; created_at: bigint | number }
+  const created = Number(d.created_at)
+  return {
+    owner: String(d.owner),
+    agent: String(d.agent),
+    active: Number(d.status) === 0,
+    createdAt: Number.isFinite(created) && created > 0 ? new Date(created * 1000) : null,
   }
 }
 

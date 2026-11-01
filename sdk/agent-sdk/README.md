@@ -126,6 +126,8 @@ disagree with what `authorize` will enforce. Reads need no account and no signer
 | Method | Returns |
 |---|---|
 | `getPolicy(deviceHash)` | the agent policy, or `null` |
+| `getDevice(deviceHash)` | `{ owner, agent, active, createdAt }`, or `null` |
+| `isDeviceAuthorized(deviceHash, agent)` | `true` when `agent` is the device's linked agent and the device is active |
 | `getDeviceOwner(deviceHash)` | owner wallet address, or `null` |
 | `getDeviceAgent(deviceHash)` | agent recorded in `device_registry`, or `null` |
 | `listDevices(wallet)` | device hashes registered to a wallet |

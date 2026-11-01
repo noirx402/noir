@@ -157,14 +157,9 @@ export class Noir {
   }
 
   async ownership(deviceHash: string, wallet: string): Promise<Ownership> {
-    const val = await this.read('deviceRegistry', 'get_device', [deviceHashScVal(deviceHash)], ['DeviceNotFound'])
-    if (!val) return { status: 'free' }
-    const d = scValToNative(val) as { owner: string; agent: string; status: number; created_at: bigint }
-    const created = Number(d.created_at)
-    return {
-      status: d.owner === wallet ? 'mine' : 'other', owner: d.owner, agent: d.agent,
-      active: Number(d.status) === 0, createdAt: created > 0 ? new Date(created * 1000) : null,
-    }
+    const d = await this.client.getDevice(deviceHash)
+    if (!d) return { status: 'free' }
+    return { status: d.owner === wallet ? 'mine' : 'other', ...d }
   }
 
   async policy(deviceHash: string): Promise<Policy | null> {

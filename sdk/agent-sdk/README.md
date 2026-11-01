@@ -90,7 +90,7 @@ const noir = new NoirAgentClient()
 
 // Who signs: the Noir extension…
 const merchant = await noirExtensionSigner()
-// …or any wallet from the Stellar Wallets Kit (Freighter, xBull, Lobstr, Noir, …)
+// …or any wallet from the Stellar Wallets Kit (Varial, xBull, Lobstr, …)
 // const { address } = await StellarWalletsKit.getAddress()
 // const merchant = walletSigner(StellarWalletsKit, address)
 
@@ -105,7 +105,7 @@ await noir.claim({ merchant, token: asset })
 |---|---|
 | `noirExtensionSigner()` | connects to the Noir browser extension (one approval per site) and returns a signer |
 | `noirExtension()` | the extension's `window.noir.stellar` provider, or `null` when it isn't installed |
-| `walletSigner(wallet, address)` | wraps any SEP-43 wallet: the Stellar Wallets Kit, Freighter's API, `window.noir.stellar` |
+| `walletSigner(wallet, address)` | wraps any SEP-43 wallet: the Stellar Wallets Kit, Varial's (Freighter's) API, `window.noir.stellar` |
 | `keypairSigner(secret)` | a signer from a secret key, for servers and agents that hold their own key |
 | `toStroops('1.5')` / `fromStroops(15000000n)` | exact conversion between XLM strings and stroops (7 decimals, no floats) |
 
@@ -139,7 +139,7 @@ disagree with what `authorize` will enforce. Reads need no account and no signer
 ## Pay and claim
 
 Writes take a **signer**: anything with `publicKey` and
-`signTransaction(xdr, { networkPassphrase })`. That's the Freighter and
+`signTransaction(xdr, { networkPassphrase })`. That's the Varial (formerly Freighter) and
 Stellar Wallets Kit shape, so a connected browser wallet works as-is and the
 secret key never reaches this SDK.
 

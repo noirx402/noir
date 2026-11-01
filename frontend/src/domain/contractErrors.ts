@@ -22,6 +22,7 @@ const MESSAGES: Record<ContractName, Record<number, string>> = {
     2: 'No payment agent is authorized for this tag.',
     3: 'A payment agent is already authorized for this tag.',
     4: 'The spending policy was rejected — check the limit and expiry date.',
+    5: 'Only the owner of this tag can change its payment agent.',
   },
   payment_escrow: {
     1: 'The escrow contract is already initialized.',
@@ -31,6 +32,10 @@ const MESSAGES: Record<ContractName, Record<number, string>> = {
     5: 'There is nothing to claim.',
     6: 'This payment was already processed.',
     7: 'Revoke the payment agent before withdrawing its escrow.',
+    8: 'This tag is not registered on-chain.',
+    9: 'This escrow is held in a different asset.',
+    10: 'Payments cannot be sent to the escrow contract itself.',
+    11: 'Enter an amount greater than zero.',
   },
 }
 

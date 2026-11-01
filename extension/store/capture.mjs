@@ -55,7 +55,7 @@ try {
     networkId: hash(Buffer.from(Networks.TESTNET)), nonce: xdr.Int64.fromString('1'), signatureExpirationLedger: 812345,
     invocation: new xdr.SorobanAuthorizedInvocation({
       function: xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(new xdr.InvokeContractArgs({
-        contractAddress: new Address('CA5S4S7QGHJHJWVJBYL3CXZXZTNGKXMNZVDAEQNN7NUXFP4D7BYK7HIX').toScAddress(),
+        contractAddress: new Address('CC7EAW5FNJEDBS7THM5IT6XIOHO4AOYMLXT3KSZ3HWUIKEACTW7E5BFS').toScAddress(),
         functionName: 'claim', args: [new Address('CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC').toScVal(), new Address(ADDRESS).toScVal()],
       })), subInvocations: [],
     }),

@@ -64,7 +64,7 @@ export function ReceiveScreen() {
 
   const shareAddress = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    await Share.share({ message: `Send ${selectedAsset} to my Noir wallet: ${address}` })
+    await Share.share({ message: `Send ${selectedAsset} to me on Noir: ${address}` })
   }
 
   const handleNfcReceive = useCallback(async () => {

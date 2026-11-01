@@ -59,18 +59,22 @@ echo "agent_registry  = $AGENT_REGISTRY_ID"
 echo "payment_escrow  = $ESCROW_ID"
 ```
 
-## 3. Initialize (order matters — escrow needs agent_registry id)
+## 3. Initialize (order matters — agent_registry needs device_registry id, escrow needs both)
 
 ```bash
 stellar contract invoke --id $DEVICE_REGISTRY_ID --source $DEPLOYER --network testnet -- \
   initialize --admin $ADMIN_ADDR
 
 stellar contract invoke --id $AGENT_REGISTRY_ID --source $DEPLOYER --network testnet -- \
-  initialize --admin $ADMIN_ADDR
+  initialize --admin $ADMIN_ADDR --device_registry_id $DEVICE_REGISTRY_ID
 
 stellar contract invoke --id $ESCROW_ID --source $DEPLOYER --network testnet -- \
-  initialize --admin $ADMIN_ADDR --agent_registry_id $AGENT_REGISTRY_ID
+  initialize --admin $ADMIN_ADDR --agent_registry_id $AGENT_REGISTRY_ID \
+  --device_registry_id $DEVICE_REGISTRY_ID
 ```
+
+Since the Week 4 fixes (2026-10-21) `agent_registry.initialize` takes the
+`device_registry_id` (it checks device ownership there).
 
 ## 4. Wire the new IDs into the app
 

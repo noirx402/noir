@@ -1,5 +1,5 @@
 import { createServer } from 'node:http'
-import { NoirAgentClient } from '@noir-wallet/agent-sdk'
+import { NoirAgentClient } from '@noirx402/agent-sdk'
 import { createApp } from './app.js'
 import { loadConfig } from './config.js'
 import { KeyStore } from './keys.js'

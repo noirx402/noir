@@ -81,3 +81,64 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--g
 .origin b { color: var(--cream); font-family: var(--display); font-size: 15px; word-break: break-all; }
 .check { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; }
 .check input { width: auto; margin-top: 3px; }
+
+/* ── Tabbed app (Wallet · Cards · Agents · Activity · Settings) ── */
+.app { height: 600px; min-height: 0; }
+body.window .app { height: auto; }
+.scroll { overflow-y: auto; min-height: 0; }
+.tabs { display: grid; grid-template-columns: repeat(6, 1fr); border-top: 1px solid var(--line); background: var(--bg); }
+.tabs button { min-height: 48px; border: 0; background: none; color: var(--muted); font: 600 10.5px/1 var(--display); letter-spacing: .02em; cursor: pointer; border-top: 2px solid transparent; }
+.tabs button:hover { color: var(--cream); }
+.tabs button.on { color: var(--gold); border-top-color: var(--gold); }
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.stack { display: flex; flex-direction: column; gap: 10px; }
+.grow { flex: 1; min-width: 0; }
+.list li.tap { cursor: pointer; }
+.list li.tap:hover { background: var(--card); }
+.good { color: var(--success); }
+.pill.bad { color: var(--danger); border-color: rgba(240,108,108,.35); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { min-height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--silver); font: 13px var(--body); cursor: pointer; }
+.chip:hover { border-color: var(--gold); }
+.chip.on { background: rgba(198,161,91,.14); border-color: var(--gold); color: var(--gold); }
+
+.banner { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); font-size: 13px; }
+.banner b { color: var(--cream); font-weight: 600; }
+.banner.ok { border-color: rgba(62,213,152,.35); }
+.banner.bad { border-color: rgba(240,108,108,.35); }
+
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex: none; }
+.dot.in { background: var(--success); } .dot.out { background: var(--gold); }
+.amt { font-family: var(--display); font-weight: 600; color: var(--cream); white-space: nowrap; }
+.amt.in { color: var(--success); }
+.amt small { color: var(--muted); font-weight: 400; }
+
+.qr { display: flex; justify-content: center; }
+.qr svg { border-radius: 12px; }
+
+.spinner { width: 40px; height: 40px; margin: 0 auto; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--gold); animation: spin .9s linear infinite; }
+.spinner.sm { width: 16px; height: 16px; border-width: 2px; margin: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
+.steps { margin: 0 auto; padding-left: 20px; color: var(--muted); font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+.badge { width: 56px; height: 56px; margin: 0 auto; border-radius: 50%; display: grid; place-items: center; font: 600 26px var(--display); }
+.badge.ok { background: rgba(62,213,152,.14); color: var(--success); }
+.badge.bad { background: rgba(240,108,108,.14); color: var(--danger); }
+
+/* Card reader */
+.reader { display: grid; place-items: center; gap: 10px; padding: 18px 0 6px; }
+.reader .ring { width: 96px; height: 96px; border-radius: 50%; border: 2px solid var(--gold); display: grid; place-items: center; position: relative; }
+.reader .ring::before, .reader .ring::after { content: ''; position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--gold); opacity: 0; animation: ping 2s ease-out infinite; }
+.reader .ring::after { animation-delay: 1s; }
+.reader .ring svg { width: 40px; height: 40px; }
+@keyframes ping { 0% { transform: scale(1); opacity: .6 } 100% { transform: scale(1.6); opacity: 0 } }
+@media (prefers-reduced-motion: reduce) { .reader .ring::before, .reader .ring::after { animation: none; } }
+.sources { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.sources li { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); }
+.sources li .dot.on { background: var(--gold); }
+.amount-in { font: 600 32px/1.2 var(--display); text-align: center; background: none; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; color: var(--cream); }
+.center .balance, .balance.center { justify-content: center; }
+.video { width: 100%; border-radius: 12px; background: #000; aspect-ratio: 4 / 3; object-fit: cover; }
+.spinner.sm { display: inline-block; vertical-align: middle; }
+.main > .pill { align-self: center; }

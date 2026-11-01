@@ -7,7 +7,7 @@
 # Contracts (deploy order matters — escrow is initialized last because it
 # needs the agent_registry + device_registry IDs):
 #   1. device_registry   initialize(admin)
-#   2. agent_registry     initialize(admin)
+#   2. agent_registry     initialize(admin, device_registry_id)
 #   3. payment_escrow     initialize(admin, agent_registry_id, device_registry_id)
 #
 # Usage:
@@ -65,17 +65,30 @@ echo
 info "Building release WASM for all three contracts…"
 (
   cd "$ASSET_DIR"
-  cargo build --release --target wasm32v1-none \
-    -p device-registry -p agent-registry -p payment-escrow
+  # payment_escrow contractimport!s the other two WASMs, so they must exist
+  # before it compiles — one combined cargo build fails on a clean checkout.
+  cargo build --release --target wasm32v1-none -p device-registry -p agent-registry
+  cargo build --release --target wasm32v1-none -p payment-escrow
 )
 ok "Build complete."
 
-DEVICE_WASM="$WASM_DIR/device_registry.wasm"
-AGENT_WASM="$WASM_DIR/agent_registry.wasm"
-ESCROW_WASM="$WASM_DIR/payment_escrow.wasm"
-for f in "$DEVICE_WASM" "$AGENT_WASM" "$ESCROW_WASM"; do
-  [ -f "$f" ] || die "expected WASM not found: $f"
+for f in device_registry agent_registry payment_escrow; do
+  [ -f "$WASM_DIR/$f.wasm" ] || die "expected WASM not found: $WASM_DIR/$f.wasm"
 done
+
+# Shrink the WASM with wasm-opt before uploading: upload fees scale with code
+# size (~25% smaller, ~22 XLM less on mainnet as of 2026-10-22). The raw
+# release WASM stays in place because payment_escrow contractimport!s it.
+info "Optimizing WASM…"
+OPT_DIR="$WASM_DIR/optimized"
+mkdir -p "$OPT_DIR"
+for f in device_registry agent_registry payment_escrow; do
+  stellar contract optimize --wasm "$WASM_DIR/$f.wasm" --wasm-out "$OPT_DIR/$f.wasm" >/dev/null
+done
+DEVICE_WASM="$OPT_DIR/device_registry.wasm"
+AGENT_WASM="$OPT_DIR/agent_registry.wasm"
+ESCROW_WASM="$OPT_DIR/payment_escrow.wasm"
+ok "Optimized: $(wc -c < "$DEVICE_WASM") + $(wc -c < "$AGENT_WASM") + $(wc -c < "$ESCROW_WASM") bytes"
 
 # ---- 2. Hash (evidence) -----------------------------------------------------
 info "Computing WASM SHA-256 hashes…"
@@ -96,6 +109,23 @@ deploy() {
     --network "$NETWORK"
 }
 
+# If anything fails after the first deploy, record which contracts went
+# on-chain so they are not lost (they are live but may be uninitialized).
+DEVICE_REGISTRY_ID="" AGENT_REGISTRY_ID="" ESCROW_ID="" INITIALIZED=""
+on_exit() {
+  local rc=$?
+  [ "$rc" -ne 0 ] && [ -n "$DEVICE_REGISTRY_ID$AGENT_REGISTRY_ID$ESCROW_ID" ] || return 0
+  local partial="$EVIDENCE_DIR/deploy-$NETWORK-$TS.partial.md"
+  mkdir -p "$EVIDENCE_DIR"
+  printf '# PARTIAL deploy (%s, exit %s) — not usable, redeploy from scratch\n\n- admin: %s\n- device_registry: %s\n- agent_registry: %s\n- payment_escrow: %s\n- initialized: %s\n- WASM SHA-256: device %s, agent %s, escrow %s\n' \
+    "$TS" "$rc" "$ADMIN_ADDR" "${DEVICE_REGISTRY_ID:-not deployed}" "${AGENT_REGISTRY_ID:-not deployed}" \
+    "${ESCROW_ID:-not deployed}" "${INITIALIZED:-none}" "$DEVICE_HASH" "$AGENT_HASH" "$ESCROW_HASH" > "$partial"
+  printf '✗ partial deploy recorded in %s\n' "$partial" >&2
+  [ -n "${GITHUB_OUTPUT:-}" ] && echo "evidence=${partial#"$REPO_ROOT"/}" >> "$GITHUB_OUTPUT"
+  return 0
+}
+trap on_exit EXIT
+
 DEVICE_REGISTRY_ID="$(deploy device_registry "$DEVICE_WASM")"
 AGENT_REGISTRY_ID="$(deploy agent_registry "$AGENT_WASM")"
 ESCROW_ID="$(deploy payment_escrow "$ESCROW_WASM")"
@@ -108,10 +138,12 @@ ok "payment_escrow  = $ESCROW_ID"
 info "Initializing device_registry…"
 stellar contract invoke --id "$DEVICE_REGISTRY_ID" --source "$DEPLOYER" --network "$NETWORK" -- \
   initialize --admin "$ADMIN_ADDR"
+INITIALIZED="device_registry"
 
-info "Initializing agent_registry…"
+info "Initializing agent_registry (admin + device_registry_id)…"
 stellar contract invoke --id "$AGENT_REGISTRY_ID" --source "$DEPLOYER" --network "$NETWORK" -- \
-  initialize --admin "$ADMIN_ADDR"
+  initialize --admin "$ADMIN_ADDR" --device_registry_id "$DEVICE_REGISTRY_ID"
+INITIALIZED="$INITIALIZED agent_registry"
 
 info "Initializing payment_escrow (admin + agent_registry_id + device_registry_id)…"
 stellar contract invoke --id "$ESCROW_ID" --source "$DEPLOYER" --network "$NETWORK" -- \
@@ -119,6 +151,7 @@ stellar contract invoke --id "$ESCROW_ID" --source "$DEPLOYER" --network "$NETWO
     --admin "$ADMIN_ADDR" \
     --agent_registry_id "$AGENT_REGISTRY_ID" \
     --device_registry_id "$DEVICE_REGISTRY_ID"
+INITIALIZED="$INITIALIZED payment_escrow"
 
 ok "All three contracts initialized."
 
@@ -158,7 +191,7 @@ cat > "$EVIDENCE_FILE" <<EOF
 ## Initialization
 
 - device_registry: \`initialize(admin=$ADMIN_ADDR)\`
-- agent_registry: \`initialize(admin=$ADMIN_ADDR)\`
+- agent_registry: \`initialize(admin=$ADMIN_ADDR, device_registry_id=$DEVICE_REGISTRY_ID)\`
 - payment_escrow: \`initialize(admin=$ADMIN_ADDR, agent_registry_id=$AGENT_REGISTRY_ID, device_registry_id=$DEVICE_REGISTRY_ID)\`
 
 ## Env (paste into frontend/.env)
@@ -170,6 +203,16 @@ EXPO_PUBLIC_PAYMENT_ESCROW_CONTRACT=$ESCROW_ID
 \`\`\`
 EOF
 ok "Evidence written: $EVIDENCE_FILE"
+trap - EXIT   # the full evidence file exists now; no partial record needed
+# In GitHub Actions, hand the evidence path and the new IDs to later steps.
+if [ -n "${GITHUB_OUTPUT:-}" ]; then
+  {
+    echo "evidence=${EVIDENCE_FILE#"$REPO_ROOT"/}"
+    echo "device=$DEVICE_REGISTRY_ID"
+    echo "agent=$AGENT_REGISTRY_ID"
+    echo "escrow=$ESCROW_ID"
+  } >> "$GITHUB_OUTPUT"
+fi
 
 # ---- 7. Optional: patch frontend/.env --------------------------------------
 if [ "$UPDATE_ENV" = "1" ]; then

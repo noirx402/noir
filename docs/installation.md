@@ -27,15 +27,15 @@ cargo install --locked stellar-cli      # or see https://developers.stellar.org/
 ## 1. Clone
 
 ```bash
-git clone https://github.com/rylsherdamz-rgb/Noir_Wallet.git
-cd Noir_Wallet
+git clone https://github.com/noirx402/noir.git
+cd noir
 ```
 
 | Path | What it is |
 |------|------------|
 | `backend/contracts/` | The three Soroban contracts (Rust) |
 | `frontend/` | React Native / Expo Android app |
-| `sdk/agent-sdk/` | TypeScript SDK for other apps (`@noir-wallet/agent-sdk`) |
+| `sdk/agent-sdk/` | TypeScript SDK for other apps (`@noirx402/agent-sdk`) |
 | `sdk/noir-api/` | Self-hosted REST gateway |
 | `scripts/` | `redeploy-contracts.sh` and helpers |
 | `deploy-evidence/` | Deploy records: contract IDs, WASM hashes, transactions |
@@ -76,9 +76,9 @@ cp .env.example .env
 | Variable | Value |
 |----------|-------|
 | `EXPO_PUBLIC_STELLAR_NETWORK` | `testnet` |
-| `EXPO_PUBLIC_DEVICE_REGISTRY_CONTRACT` | `CB4DPMGOA374JIB2ZVD4AHW5GJKQUYNOFGRYNOJ75EFH2KCJSMHOWIRA` |
-| `EXPO_PUBLIC_AGENT_REGISTRY_CONTRACT` | `CBTDMJVCFQDIVWZBKAKZ2FQ3UEJNAAUFYCTJ3E4ON2MYXPLPSIXQ25JZ` |
-| `EXPO_PUBLIC_PAYMENT_ESCROW_CONTRACT` | `CA5S4S7QGHJHJWVJBYL3CXZXZTNGKXMNZVDAEQNN7NUXFP4D7BYK7HIX` |
+| `EXPO_PUBLIC_DEVICE_REGISTRY_CONTRACT` | `CAC4KOLHDLDYDWBOKXNKRN5KVHO56PLOIFXDLTBUWGVN6GVDEB7FQHU5` |
+| `EXPO_PUBLIC_AGENT_REGISTRY_CONTRACT` | `CCMZDSPTLX7IIJWCYEUM5DJUHOSOYSTHGK777S2TXZWEMC5ZZGPJ3EBV` |
+| `EXPO_PUBLIC_PAYMENT_ESCROW_CONTRACT` | `CC7EAW5FNJEDBS7THM5IT6XIOHO4AOYMLXT3KSZ3HWUIKEACTW7E5BFS` |
 | `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_API_KEY` | Optional backend for notifications; the NFC payment flow does not need it |
 | `EXPO_PUBLIC_TERMINAL_ID`, `EXPO_PUBLIC_TERMINAL_PUBLIC_KEY`, `EXPO_PUBLIC_ISSUER_ADDRESS` | Optional; leave empty for the reference flow |
 
@@ -106,7 +106,7 @@ npx expo run:android          # first build takes several minutes
 
 Later runs only need `npx expo start` while the dev client is installed.
 
-**No build machine?** Install the prebuilt APK from the [Beta-Testing release](https://github.com/rylsherdamz-rgb/Noir_Wallet/releases/tag/Beta-Testing) (`app-release.apk`). It uses the same Testnet contracts.
+**No build machine?** Install the prebuilt APK from the [Beta-Testing release](https://github.com/noirx402/noir/releases/tag/Beta-Testing) (`app-release.apk`). It uses the same Testnet contracts.
 
 Then follow the [walkthrough](walkthrough.md) to create a wallet, link a tag and run the payment flow.
 

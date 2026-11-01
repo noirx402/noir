@@ -3,10 +3,11 @@ import type { NoirContracts } from './networks.js'
 /** Error enums of the three contracts, by code (source: backend/contracts/<name>/src/lib.rs). */
 const CODES: Record<keyof NoirContracts, Record<number, string>> = {
   deviceRegistry: { 1: 'AlreadyInitialized', 2: 'DeviceNotFound', 3: 'NotOwner', 4: 'AlreadyRegistered' },
-  agentRegistry: { 1: 'AlreadyInitialized', 2: 'AgentNotFound', 3: 'AlreadyRegistered', 4: 'InvalidPolicy' },
+  agentRegistry: { 1: 'AlreadyInitialized', 2: 'AgentNotFound', 3: 'AlreadyRegistered', 4: 'InvalidPolicy', 5: 'NotOwner' },
   paymentEscrow: {
     1: 'AlreadyInitialized', 2: 'InsufficientBalance', 3: 'AgentNotAuthorized', 4: 'NotDeviceOwner',
     5: 'NothingToClaim', 6: 'DuplicateAuth', 7: 'AgentStillActive', 8: 'DeviceNotRegistered',
+    9: 'InvalidAsset', 10: 'InvalidRecipient', 11: 'InvalidAmount',
   },
 }
 

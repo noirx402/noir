@@ -25,7 +25,7 @@ export default function DocsHome() {
 
       <h2 id="choose">Choose how to integrate</h2>
       <div className="doc-cards">
-        <Link href="/docs/sdk/" className="doc-card"><b>TypeScript SDK</b><span>Node 20+, browsers, React Native. Talks to Soroban RPC directly — no server, no key.</span></Link>
+        <Link href="/docs/sdk/" className="doc-card"><b>TypeScript SDK</b><span>Node 22.23.4+, browsers, React Native. Talks to Soroban RPC directly — no server, no key.</span></Link>
         <Link href="/docs/api/" className="doc-card"><b>REST API</b><span>Any language. Self-hosted gateway with API keys, scopes, rate limits and webhooks.</span></Link>
         <Link href="/docs/contracts/" className="doc-card"><b>Contracts directly</b><span>Call the Soroban contracts with any Stellar SDK or the Stellar CLI.</span></Link>
       </div>

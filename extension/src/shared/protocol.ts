@@ -43,6 +43,9 @@ export interface PendingApproval {
   createdAt: number
 }
 
+/** Minutes of inactivity before Noir locks itself. */
+export const AUTO_LOCK_CHOICES = [5, 15, 30, 60]
+
 /** Popup/approval window → background. */
 export type UiMessage =
   | { type: 'state' }
@@ -55,3 +58,20 @@ export type UiMessage =
   | { type: 'reset' }
   | { type: 'pending'; id: string }
   | { type: 'resolve'; id: string; approve: boolean }
+  | { type: 'changePassword'; password: string; next: string }
+  | { type: 'exportSecret'; password: string }
+  | { type: 'setAutoLock'; minutes: number }
+  | { type: 'agentKeys' }
+  | { type: 'send'; destination: string; amount: number; memo?: string }
+  | { type: 'linkCard'; deviceHash: string; label: string; maxXlm: number; expiryDays: number }
+  | { type: 'setCardLabel'; deviceHash: string; label: string }
+  | { type: 'fundEscrow' | 'withdrawEscrow' | 'topUpAgent'; deviceHash: string; amount: number }
+  | { type: 'setPolicy'; deviceHash: string; maxXlm: number; expiryDays: number }
+  | { type: 'unlinkCard'; deviceHash: string }
+  | { type: 'charge'; deviceHash: string; amount: number }
+  | { type: 'payWithCard'; deviceHash: string; merchant: string; amount: number }
+  | { type: 'claim' }
+  | { type: 'setNotify'; on: boolean }
+
+/** A wallet write the service worker is running or just finished (popup can close meanwhile). */
+export interface Job { label: string; startedAt: number; done?: { ok: boolean; message: string; hash?: string } }

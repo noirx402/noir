@@ -1,0 +1,101 @@
+Noir Wallet — automated test results
+Run: 20261021T034015Z (UTC)   commit: 43af0bc   branch: ccr-b657250b-itlfyf
+Toolchain: rustc 1.97.0 (2d8144b78 2026-07-07) / node v22.22.0
+
+================ Soroban contracts (cargo test, host target) ================
+     Running unittests src/lib.rs (target/x86_64-unknown-linux-gnu/debug/deps/agent_registry-6833ee787f2aa872)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/integration.rs (target/x86_64-unknown-linux-gnu/debug/deps/integration-f45cd8decaf84eff)
+test tests::test_check_payment_accepts_in_policy ... ok
+test tests::test_check_payment_rejects_nonpositive_amount ... ok
+test tests::test_check_payment_rejects_over_limit ... ok
+test tests::test_check_payment_rejects_wrong_asset ... ok
+test tests::test_check_payment_uncapped_when_max_zero ... ok
+test tests::test_check_payment_rejects_after_expiry ... ok
+test tests::test_initialize_happy_path ... ok
+test tests::test_is_auth_false_after_expiry ... ok
+test tests::test_is_auth_false_for_stranger ... ok
+test tests::test_new_owner_replaces_stale_policy ... ok
+test tests::test_register_and_get_agent_roundtrip ... ok
+test tests::test_is_auth_true_for_authorized_agent ... ok
+test tests::test_initialize_double_init_guard - should panic ... ok
+test tests::test_duplicate_registration_rejected - should panic ... ok
+test tests::test_register_for_unowned_device_rejected - should panic ... ok
+test tests::test_register_for_someone_elses_device_rejected - should panic ... ok
+test tests::test_register_with_negative_max_amount_rejected - should panic ... ok
+test tests::test_register_with_past_expiry_rejected - should panic ... ok
+test tests::test_revoke_unknown_device_panics - should panic ... ok
+test tests::test_revoke_by_stranger_rejected - should panic ... ok
+test tests::test_revoke_removes_authorization ... ok
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.19s
+     Running unittests src/lib.rs (target/x86_64-unknown-linux-gnu/debug/deps/device_registry-f4a138c3fd196678)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/integration.rs (target/x86_64-unknown-linux-gnu/debug/deps/integration-df95ce80284b865e)
+test tests::test_is_authorized_false_for_unknown_device ... ok
+test tests::test_initialize_happy_path ... ok
+test tests::test_is_authorized_false_for_wrong_agent ... ok
+test tests::test_register_maps_device ... ok
+test tests::test_revoke_only_removes_owned_device ... ok
+test tests::test_revoke_removes_entry_enabling_re_registration ... ok
+test tests::test_initialize_double_init_guard - should panic ... ok
+test tests::test_unauthorized_register_rejected - should panic ... ok
+test tests::test_revoke_non_owner_rejected - should panic ... ok
+test tests::test_get_device_after_revoke_panics - should panic ... ok
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+     Running unittests src/lib.rs (target/x86_64-unknown-linux-gnu/debug/deps/payment_escrow-74298b3188d5eb1c)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/integration.rs (target/x86_64-unknown-linux-gnu/debug/deps/integration-a42e6091d429a7cf)
+test tests::test_agent_hijack_rejected ... ok
+test tests::test_authorize_in_policy_payment ... ok
+test tests::test_balance_of_unfunded_is_zero ... ok
+test tests::test_claim_only_pays_the_payment_asset ... ok
+test tests::test_cross_asset_sweep_rejected - should panic ... ok
+test tests::test_claim_nothing_fails - should panic ... ok
+test tests::test_cross_asset_defund_rejected - should panic ... ok
+test tests::test_claim_payments ... ok
+test tests::test_expired_authorization_rejected - should panic ... ok
+test tests::test_defund_escrow_returns_funds ... ok
+test tests::test_escrow_as_merchant_rejected - should panic ... ok
+test tests::test_fund_with_second_asset_rejected - should panic ... ok
+test tests::test_fund_unregistered_device_rejected - should panic ... ok
+test tests::test_initialize_double_init_guard - should panic ... ok
+test tests::test_fund_escrow_increases_balance ... ok
+test tests::test_insufficient_balance_rejected - should panic ... ok
+test tests::test_late_claim_still_pays ... ok
+test tests::test_negative_defund_rejected - should panic ... ok
+test tests::test_nonpositive_fund_rejected - should panic ... ok
+test tests::test_replayed_nonce_rejected - should panic ... ok
+test tests::test_over_limit_payment_rejected - should panic ... ok
+test tests::test_revoked_device_rejected - should panic ... ok
+test tests::test_revoked_agent_rejected - should panic ... ok
+test tests::test_sweep_rejected_while_agent_active - should panic ... ok
+test tests::test_sweep_on_empty_escrow_is_noop ... ok
+test tests::test_sweep_on_revoke_returns_all_funds_to_owner ... ok
+test tests::test_stale_policy_after_ownership_change_rejected - should panic ... ok
+test tests::test_unauthorized_agent_rejected - should panic ... ok
+test tests::test_wrong_asset_rejected - should panic ... ok
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.94s
+
+================ App: tsc --noEmit ================
+tsc: clean (0 errors)
+
+================ App: Vitest ================
+ Test Files  23 passed (23)
+      Tests  306 passed (306)
+
+================ Agent SDK: typecheck + Vitest ================
+tsc: clean
+ Test Files  1 passed | 2 skipped (3)
+      Tests  18 passed | 19 skipped (37)
+
+================ REST gateway: typecheck + Vitest ================
+tsc: clean
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+
+================ WASM SHA-256 (built in this run; informational) ================
+soroban-sdk embeds the build host's absolute path, so these differ per machine.
+The authoritative hashes are the ones recorded at deploy time in deploy-evidence/deploy-testnet-*.md.
+bf071688e0a99bd74e55a1deecf548092d441800219773bf79ea06df081c3a7a  device_registry.wasm
+143819a1d4431e0965623ce483f23f7874b4527b5e2098abe78e354c7386d26d  agent_registry.wasm
+5ce7f4366c0d2ae077ca20cf4205f3d1e67d5c8a4fd4eaec99355042b6fa75cb  payment_escrow.wasm

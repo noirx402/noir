@@ -22,7 +22,7 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.noirwallet.app",
+      "package": "com.noirx402.wallet",
       "permissions": [
         "NFC"
       ],

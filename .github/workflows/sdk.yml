@@ -1,0 +1,52 @@
+name: SDK CI
+
+on:
+  push:
+    branches: [main, instaward, instaward-staging, instaward-development]
+    paths:
+      - 'sdk/**'
+      - 'scripts/propagate-contract-ids.sh'
+      - 'scripts/tests/propagate-contract-ids.sh'
+      - '.github/workflows/sdk.yml'
+  pull_request:
+    paths:
+      - 'sdk/**'
+      - 'scripts/propagate-contract-ids.sh'
+      - 'scripts/tests/propagate-contract-ids.sh'
+      - '.github/workflows/sdk.yml'
+
+jobs:
+  test:
+    name: Agent SDK + REST gateway
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preserve contract deployment history
+        run: bash scripts/tests/propagate-contract-ids.sh
+
+      - uses: actions/setup-node@v4
+        with:
+          # Match .nvmrc and the packages' patched Node requirement.
+          node-version: 22.23.4
+          cache: npm
+          cache-dependency-path: |
+            sdk/agent-sdk/package-lock.json
+            sdk/noir-api/package-lock.json
+
+      # Live Testnet suites are opt-in (NOIR_TESTNET=1) and skipped here.
+      - name: Agent SDK — install, typecheck, test, build
+        working-directory: sdk/agent-sdk
+        run: |
+          npm ci
+          npm run typecheck
+          npm test
+          npm run build
+
+      # noir-api depends on ../agent-sdk via file:, so it needs the build above.
+      - name: REST gateway — install, typecheck, test
+        working-directory: sdk/noir-api
+        run: |
+          npm ci
+          npm run typecheck
+          npm test

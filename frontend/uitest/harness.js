@@ -1,4 +1,4 @@
-// Playwright UI harness for the Noir Wallet Expo react-native-web build.
+// Playwright UI harness for the Noir Expo react-native-web build.
 // Boots the web dev server, seeds a wallet + devices + agents into localStorage
 // (so agents self-heal from the persisted device list on login), then navigates
 // each screen and screenshots it for visual review.

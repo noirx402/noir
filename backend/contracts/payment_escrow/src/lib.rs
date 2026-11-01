@@ -19,6 +19,10 @@ pub enum DataKey {
     AgentRegistry,
     DeviceRegistry,
     EscrowBalance(BytesN<32>),
+    /// The token a device's escrow balance is held in. Balances are plain
+    /// numbers, so every movement must use this token or a deposit in one
+    /// token could be withdrawn in another.
+    EscrowToken(BytesN<32>),
     PendingIndex(Address),
     PendingPayment((Address, u32)),
     AuthNonce((BytesN<32>, Address)),
@@ -27,6 +31,8 @@ pub enum DataKey {
 #[contracttype]
 pub struct Payment {
     pub device_hash: BytesN<32>,
+    /// Token the payment was authorized in; `claim` only pays it out in this token.
+    pub asset: Address,
     pub amount: i128,
     pub timestamp: u64,
 }
@@ -46,6 +52,12 @@ pub enum Error {
     /// because defund/sweep resolve the owner through device_registry, so a
     /// deposit for an unregistered device could never be recovered.
     DeviceNotRegistered = 8,
+    /// The token does not match the one the device's escrow is held in.
+    InvalidAsset = 9,
+    /// The merchant is the escrow contract itself; the payment could never be claimed.
+    InvalidRecipient = 10,
+    /// Deposit or withdrawal amount is zero or negative.
+    InvalidAmount = 11,
 }
 
 #[contract]
@@ -115,20 +127,12 @@ impl PaymentEscrow {
     ) {
         wallet.require_auth();
 
-        let device_registry_id: Address = env
-            .storage()
-            .persistent()
-            .get(&DataKey::DeviceRegistry)
-            .unwrap_or_else(|| panic_with_error!(&env, Error::DeviceNotRegistered));
-        let registered = device_registry::Client::new(&env, &device_registry_id)
-            .try_get_owner(&device_hash)
-            .map_or(false, |r| r.is_ok());
-        if !registered {
+        if amount <= 0 {
+            panic_with_error!(&env, Error::InvalidAmount);
+        }
+        if Self::device_owner(&env, &device_hash).is_none() {
             panic_with_error!(&env, Error::DeviceNotRegistered);
         }
-
-        let token_client = soroban_sdk::token::Client::new(&env, &token);
-        token_client.transfer(&wallet, &env.current_contract_address(), &amount);
 
         let key = DataKey::EscrowBalance(device_hash.clone());
         let current = env
@@ -136,7 +140,19 @@ impl PaymentEscrow {
             .persistent()
             .get::<_, i128>(&key)
             .unwrap_or(0);
+
+        // An empty escrow may switch token; a funded one only takes more of
+        // the token it already holds.
+        let token_key = DataKey::EscrowToken(device_hash.clone());
+        if current > 0 && env.storage().persistent().get::<_, Address>(&token_key) != Some(token.clone()) {
+            panic_with_error!(&env, Error::InvalidAsset);
+        }
+
+        let token_client = soroban_sdk::token::Client::new(&env, &token);
+        token_client.transfer(&wallet, &env.current_contract_address(), &amount);
+
         env.storage().persistent().set(&key, &(current + amount));
+        env.storage().persistent().set(&token_key, &token);
 
         FundEvent { device_hash, amount }.publish(&env);
     }
@@ -161,6 +177,15 @@ impl PaymentEscrow {
         }
         env.storage().persistent().set(&nonce_key, &nonce);
 
+        if merchant == env.current_contract_address() {
+            panic_with_error!(&env, Error::InvalidRecipient);
+        }
+
+        // A revoked (or never registered) device cannot pay, even if an agent
+        // policy for it is still on file.
+        let owner = Self::device_owner(&env, &device_hash)
+            .unwrap_or_else(|| panic_with_error!(&env, Error::DeviceNotRegistered));
+
         let agent_registry_id: Address = env
             .storage()
             .persistent()
@@ -175,6 +200,13 @@ impl PaymentEscrow {
         if !reg.check_payment(&device_hash, &agent, &asset, &amount) {
             panic_with_error!(&env, Error::AgentNotAuthorized);
         }
+        // The policy must have been granted by the device's current owner. A
+        // policy left over from a previous owner of the tag cannot spend the
+        // new owner's escrow.
+        if reg.get_policy(&device_hash).owner != owner {
+            panic_with_error!(&env, Error::AgentNotAuthorized);
+        }
+        Self::require_escrow_token(&env, &device_hash, &asset);
 
         let balance_key = DataKey::EscrowBalance(device_hash.clone());
         let balance = env
@@ -201,11 +233,14 @@ impl PaymentEscrow {
 
         let payment = Payment {
             device_hash: device_hash.clone(),
+            asset,
             amount,
             timestamp: env.ledger().timestamp(),
         };
+        // Persistent, not temporary: an unclaimed payment has already left the
+        // device balance, so letting it expire would strand the funds.
         env.storage()
-            .temporary()
+            .persistent()
             .set(&DataKey::PendingPayment((merchant.clone(), idx)), &payment);
 
         AuthorizeEvent {
@@ -226,18 +261,25 @@ impl PaymentEscrow {
             .get(&idx_key)
             .unwrap_or(0);
 
+        // Only payments made in `token` are paid out; any in another token
+        // stay pending for a claim in that token.
         let mut total: i128 = 0;
         let mut claimed_indices: Vec<u32> = Vec::new(&env);
+        let mut remaining = false;
 
         for i in 1..=max_idx {
             let payment_key = DataKey::PendingPayment((merchant.clone(), i));
             if let Some(payment) = env
                 .storage()
-                .temporary()
+                .persistent()
                 .get::<_, Payment>(&payment_key)
             {
-                total += payment.amount;
-                claimed_indices.push_back(i);
+                if payment.asset == token {
+                    total += payment.amount;
+                    claimed_indices.push_back(i);
+                } else {
+                    remaining = true;
+                }
             }
         }
 
@@ -247,10 +289,12 @@ impl PaymentEscrow {
 
         for idx in claimed_indices.iter() {
             let key = DataKey::PendingPayment((merchant.clone(), idx));
-            env.storage().temporary().remove(&key);
+            env.storage().persistent().remove(&key);
         }
 
-        env.storage().persistent().set(&idx_key, &0u32);
+        if !remaining {
+            env.storage().persistent().set(&idx_key, &0u32);
+        }
 
         let token_client = soroban_sdk::token::Client::new(&env, &token);
         token_client.transfer(
@@ -277,6 +321,11 @@ impl PaymentEscrow {
         let reg = device_registry::Client::new(&env, &device_registry_id);
         let owner = reg.get_owner(&device_hash);
         owner.require_auth();
+
+        if amount <= 0 {
+            panic_with_error!(&env, Error::InvalidAmount);
+        }
+        Self::require_escrow_token(&env, &device_hash, &token);
 
         let balance_key = DataKey::EscrowBalance(device_hash.clone());
         let balance = env
@@ -352,6 +401,7 @@ impl PaymentEscrow {
         if balance <= 0 {
             return 0;
         }
+        Self::require_escrow_token(&env, &device_hash, &token);
 
         env.storage().persistent().set(&balance_key, &0i128);
 
@@ -365,6 +415,13 @@ impl PaymentEscrow {
         SweepEvent { device_hash, balance }.publish(&env);
 
         balance
+    }
+
+    /// Token the device's escrow is held in, if it was ever funded.
+    pub fn escrow_token(env: Env, device_hash: BytesN<32>) -> Option<Address> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::EscrowToken(device_hash))
     }
 
     pub fn balance_of(env: Env, device_hash: BytesN<32>) -> i128 {
@@ -387,12 +444,38 @@ impl PaymentEscrow {
             let payment_key = DataKey::PendingPayment((merchant.clone(), i));
             if let Some(payment) = env
                 .storage()
-                .temporary()
+                .persistent()
                 .get::<_, Payment>(&payment_key)
             {
                 total += payment.amount;
             }
         }
         total
+    }
+}
+
+impl PaymentEscrow {
+    /// Owner of `device_hash` in device_registry, or None if it is not registered.
+    fn device_owner(env: &Env, device_hash: &BytesN<32>) -> Option<Address> {
+        let device_registry_id: Address = env
+            .storage()
+            .persistent()
+            .get(&DataKey::DeviceRegistry)
+            .unwrap_or_else(|| panic_with_error!(env, Error::DeviceNotRegistered));
+        match device_registry::Client::new(env, &device_registry_id).try_get_owner(device_hash) {
+            Ok(Ok(owner)) => Some(owner),
+            _ => None,
+        }
+    }
+
+    /// Panic `InvalidAsset` unless `token` is the token the device's escrow is held in.
+    fn require_escrow_token(env: &Env, device_hash: &BytesN<32>, token: &Address) {
+        let held: Option<Address> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::EscrowToken(device_hash.clone()));
+        if held.as_ref() != Some(token) {
+            panic_with_error!(env, Error::InvalidAsset);
+        }
     }
 }

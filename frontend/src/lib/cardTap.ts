@@ -29,7 +29,7 @@ export async function resolveCardRecipient(
   const mine = devices.find((d) => d.deviceUidHash === hash && d.agentPublicKey)
   if (mine?.agentPublicKey) return { address: mine.agentPublicKey, label: `${mine.label} (your card)` }
   const owner = await x402.getDeviceOwnership(hash, walletPub)
-  if (owner.status === 'free') throw new Error('This card isn’t linked to a Noir wallet, so there’s no one to pay.')
+  if (owner.status === 'free') throw new Error('This card isn’t linked to a Noir account, so there’s no one to pay.')
   if (owner.status === 'mine') throw new Error('That’s your own card. Use Top up on the card instead.')
   return { address: owner.owner, label: 'Card owner' }
 }

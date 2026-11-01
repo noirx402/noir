@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import {
   NoirContractError, normalizeDeviceHash,
   type NoirAgentClient, type NoirOperation, type NoirEventType,
-} from '@noir-wallet/agent-sdk'
+} from '@noirx402/agent-sdk'
 import { presentedKey, type ApiKeyRecord, type KeyStore, type Scope } from './keys.js'
 import type { RateLimiter } from './ratelimit.js'
 import { checkWebhookUrl, isEventType, type WebhookHub } from './webhooks.js'

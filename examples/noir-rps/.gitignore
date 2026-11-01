@@ -1,0 +1,4 @@
+node_modules/
+dist/
+# The house's Testnet secret key (created on first run)
+.house-secret

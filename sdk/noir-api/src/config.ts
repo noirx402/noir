@@ -1,5 +1,5 @@
 import { readFileSync, existsSync } from 'node:fs'
-import type { NoirAgentClientOptions } from '@noir-wallet/agent-sdk'
+import type { NoirAgentClientOptions } from '@noirx402/agent-sdk'
 import type { ApiKeyRecord } from './keys.js'
 
 export interface ServerConfig {

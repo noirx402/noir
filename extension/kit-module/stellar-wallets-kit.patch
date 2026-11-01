@@ -1,5 +1,5 @@
 diff --git a/docs/files/wallets/supported-wallets.md b/docs/files/wallets/supported-wallets.md
-index 37bc61e..72c6bf9 100644
+index 43b59ec..4a4bdf3 100644
 --- a/docs/files/wallets/supported-wallets.md
 +++ b/docs/files/wallets/supported-wallets.md
 @@ -18,6 +18,7 @@ These are the current supported wallets/modules:
@@ -11,10 +11,10 @@ index 37bc61e..72c6bf9 100644
  ## How to import a wallet's module?
  
 diff --git a/src/build_npm.ts b/src/build_npm.ts
-index ffb9441..87adf0c 100644
+index fbd4b75..1184e46 100644
 --- a/src/build_npm.ts
 +++ b/src/build_npm.ts
-@@ -80,6 +80,10 @@ await build({
+@@ -84,6 +84,10 @@ await build({
        name: "./modules/metamask",
        path: "./sdk/modules/metamask.module.ts",
      },
@@ -26,10 +26,10 @@ index ffb9441..87adf0c 100644
        name: "./modules/onekey",
        path: "./sdk/modules/onekey.module.ts",
 diff --git a/src/deno.json b/src/deno.json
-index 9ef0a32..d5fc484 100644
+index 3977444..822686a 100644
 --- a/src/deno.json
 +++ b/src/deno.json
-@@ -49,6 +49,7 @@
+@@ -50,6 +50,7 @@
      "./modules/klever": "./sdk/modules/klever.module.ts",
      "./modules/ledger": "./sdk/modules/ledger.module.ts",
      "./modules/lobstr": "./sdk/modules/lobstr.module.ts",
@@ -37,54 +37,6 @@ index 9ef0a32..d5fc484 100644
      "./modules/onekey": "./sdk/modules/onekey.module.ts",
      "./modules/rabet": "./sdk/modules/rabet.module.ts",
      "./modules/scopuly": "./sdk/modules/scopuly.module.ts",
-diff --git a/src/deno.lock b/src/deno.lock
-index 3ae944c..0c1a06c 100644
---- a/src/deno.lock
-+++ b/src/deno.lock
-@@ -3,10 +3,12 @@
-   "specifiers": {
-     "jsr:@david/code-block-writer@^13.0.3": "13.0.3",
-     "jsr:@deno/dnt@0.43.2": "0.43.2",
-+    "jsr:@std/assert@1": "1.0.19",
-     "jsr:@std/bytes@1.0.6": "1.0.6",
-     "jsr:@std/encoding@1.0.11": "1.0.11",
-     "jsr:@std/fmt@1": "1.0.10",
-     "jsr:@std/fs@1": "1.0.24",
-+    "jsr:@std/internal@^1.0.12": "1.0.14",
-     "jsr:@std/internal@^1.0.14": "1.0.14",
-     "jsr:@std/path@1": "1.1.6",
-     "jsr:@std/path@^1.1.5": "1.1.6",
-@@ -48,6 +50,12 @@
-         "jsr:@ts-morph/bootstrap"
-       ]
-     },
-+    "@std/assert@1.0.19": {
-+      "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e",
-+      "dependencies": [
-+        "jsr:@std/internal@^1.0.12"
-+      ]
-+    },
-     "@std/bytes@1.0.6": {
-       "integrity": "f6ac6adbd8ccd99314045f5703e23af0a68d7f7e58364b47d2c7f408aeb5820a"
-     },
-@@ -60,7 +68,7 @@
-     "@std/fs@1.0.24": {
-       "integrity": "f3061b45b81673a2bece689da041df32d174be064c89eb6397fb5718d3fb7877",
-       "dependencies": [
--        "jsr:@std/internal",
-+        "jsr:@std/internal@^1.0.14",
-         "jsr:@std/path@^1.1.5"
-       ]
-     },
-@@ -70,7 +78,7 @@
-     "@std/path@1.1.6": {
-       "integrity": "c68485c2a4dfbb5ae3cc74fae4e8c4e5d874cf8a8ed12927917235c758b46cbe",
-       "dependencies": [
--        "jsr:@std/internal"
-+        "jsr:@std/internal@^1.0.14"
-       ]
-     },
-     "@ts-morph/bootstrap@0.29.0": {
 diff --git a/src/sdk/modules/noir.module.test.ts b/src/sdk/modules/noir.module.test.ts
 new file mode 100644
 index 0000000..46eff19
@@ -177,14 +129,14 @@ index 0000000..46eff19
 +});
 diff --git a/src/sdk/modules/noir.module.ts b/src/sdk/modules/noir.module.ts
 new file mode 100644
-index 0000000..c1419b8
+index 0000000..876f0c0
 --- /dev/null
 +++ b/src/sdk/modules/noir.module.ts
 @@ -0,0 +1,128 @@
 +/**
 + * Noir module for the Stellar Wallets Kit.
 + *
-+ * Noir (https://rylsherdamz-rgb.github.io/Noir_Wallet/) is a browser
++ * Noir (https://noirx402.github.io/noir/) is a browser
 + * extension that injects a SEP-43 provider at `window.noir.stellar`. Every
 + * provider method resolves (it never rejects) with the SEP-43 result or with
 + * `{ error: { code, message } }`; this module turns that error into a throw.
@@ -237,7 +189,7 @@ index 0000000..c1419b8
 +
 +  productId: string = NOIR_ID;
 +  productName: string = "Noir";
-+  productUrl: string = "https://rylsherdamz-rgb.github.io/Noir_Wallet/";
++  productUrl: string = "https://chromewebstore.google.com/detail/noir/gikfhchijjljpbhokmdmaadgmpbchmjl";
 +  productIcon: string = NOIR_ICON;
 +
 +  async isAvailable(): Promise<boolean> {
@@ -310,7 +262,7 @@ index 0000000..c1419b8
 +const NOIR_ICON =
 +  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD0AAABACAMAAACeAI/EAAAAeFBMVEVqY1d0ZlBcUT+CbEqpmHfIxLO1j0vMwarFoWTazK/f1sPAuqe8tKC8s5+Xe06soo2ZekSliFaxmm2bdjWOcD/CvK26rpaenJNxcGlPUlAvNj3OuJDXw5rSqmfCm1Tl2sXt49Dj07Tix5f07+Spgj2jfDoxOEHRp16jjzznAAAAG3RSTlMBLrxa9Lr++vn+/raw4KOa2OL8/Mf2+fT5+fyJotllAAAEQ0lEQVRIx52XDZeiIBSGUwuFtqZy0wwUqaz//w/3foAybbbT3nPmNAqP73v5ZrFYJGmy+DyylH+T5Sr7HF4tWTMTOk8/hFPTikAXUq0/cZ/9UqbzdCq61vabn7vPNr1rO5EFutO2l9ufsclW9rbtRrrruuLS9+or+VFz9X1vCqDTke5aBy9/4D41UM8ViDC9w3/Rew/u38sna9X3V/Qd6IRpgR/t7duuJ9fgu4voG8GicFSUZ+9dg0EhBCI7ogWyEK2lQjXjnlxT0lQb6CSmhe45XrqHTubQwtP7hIaah4WQvoL5a94k6VgmAi2YHsOnDu43z2F9iTvcxursPMTtprnS9VVQiS1uI03Ok31gh4G9X6+zuB6GEec23zGLdHlwszDiUpQTzmPt9wgPZXmYh69XeyhLwD3vxznTBA//pkn9FtOeLYU29g3tYEWZcB4V2W2CpXRv8nZSahHMl35lKoNrbaRzdh52Thp9GBjfMZ2ULNwag/SsONPGFIwHeudTNhJh5+ayRhpxdD8MYRlO2fVIvxa3LuCa3E+0aHVEuznfo7guxER7eKT7WWmgSRzwMI1TeGJpT7tZ6aANEbRXRn8z/krcuidcfvlVI6eOiGn5l7T8Rhvj3MbvRJL7UY7OjX4Wt3rC/bCQnPiaiYmWWj9nLrWJxLkar8gbLzgaB9o8GYdMI+/8u6K05dNbiS36fbQ7bNaR9r8GrW/d+PpY1fVyf1pikz4Z13p5Wi7ruspHD2g9GIfJJZvz+Xw/nxvATdxuPcJQgHFSY+etwTg7sria1gDfPR5bVx6GsnuFKyvT0GdbJP1qrU4gjfx9+a3VpV6efUnNNQGhPtsElDa4hhXOTWy911XDwuB7qmzVerFxEY3eKZo6GjDO+4bXx6guJp4W7WXibX1qmgZk9tXU6rKCjO5NczpVkfKlPWSwsjza9uIiPxJ6DirGdHOCnpJqUnGXtn2ktAs+Hg/g4wR6dZRumpz5UcWF1ukWJPnAlrYP5HVsAEfUNL9k/GmUBYKlcRNFuKUErIdxxvQTPfKWLLcYfk1dpPToDUAtRXBM49hQKKupGooVYWVKdvQ9/1o6hkfa0syFP+PrUL3pZJkVj0A/OjhAfHeONLY3nDk65AgW0dkkZbobjx8W3E+0o76CnX8QwvPxkTwRgYXTTDjfyJojPCMN+xd8YGqyxbSHM9xdokEPo+4U6MPgQwiRPV8zSg932o85BXPjfm5yxWPMHoYb02Wavbim7AnuWoadUjXOZ6UYd4LZ3cwlKElvgg/blmAlT+caf6nVpHjHMr+DXoHlQnEcl5JowK0WQ/k7+8cJPNsJ7WEnq6oiHB8Or9J9cZ7dMeDyCiPnJ/nTO1+yoqSB1Dl+QeKnvj64MpEwsFLmmtyvPrivZUeA85y2thz4fJN9dkdd41pEYap1+ulFNcm2G5iV0tTb7H/uyND7tVy9beo/BoQYdudAjWoAAAAASUVORK5CYII=";
 diff --git a/src/sdk/modules/utils.ts b/src/sdk/modules/utils.ts
-index 0bdd736..a66a16e 100644
+index 2b33610..1724ae3 100644
 --- a/src/sdk/modules/utils.ts
 +++ b/src/sdk/modules/utils.ts
 @@ -14,6 +14,7 @@ import { CactusLinkModule } from "./cactuslink.module.ts";

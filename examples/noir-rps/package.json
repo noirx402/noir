@@ -1,0 +1,30 @@
+{
+  "name": "noir-rps",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Rock, paper, scissors on Stellar Testnet with the Noir extension and @noirx402/agent-sdk.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "house": "tsx server/main.ts",
+    "web": "vite",
+    "build": "tsc --noEmit && vite build",
+    "start": "vite build && NODE_ENV=production tsx server/main.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "vite build && node tests/e2e.mjs"
+  },
+  "dependencies": {
+    "@noirx402/agent-sdk": "^0.2.0",
+    "@stellar/stellar-sdk": "^16.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "playwright": "1.63.0",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.5",
+    "vitest": "^4.1.9"
+  }
+}

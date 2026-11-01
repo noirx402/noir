@@ -1,0 +1,577 @@
+# Redeploy the Soroban contracts to Testnet, build the Android APK against the
+# new contract IDs, and attach it to a GitHub release.
+#
+# Run it by hand: Actions → "Redeploy contracts + release APK" → Run workflow.
+#
+# What it does (issue #24 order: deploy → matrix PASS → propagate → APK):
+#   1. deploy    — checks out `base_branch` (instaward-development by default),
+#                  preflights, tests the contracts and runs
+#                  scripts/redeploy-contracts.sh (deploy → initialize → evidence).
+#   2. matrix    — runs the guarded SDK security matrix against the NEW IDs. It
+#                  must report PASS (all 20 outcomes) for exactly those IDs. This
+#                  job runs third-party npm code, so it gets no secrets and a
+#                  read-only token; nothing it does reaches the jobs below except
+#                  its report, which they re-check themselves.
+#   3. propagate — in a fresh checkout, re-verifies the report, swaps the old IDs
+#                  and WASM hashes for the new ones (propagate-contract-ids.sh)
+#                  and opens a PR into `base_branch` with only those files, the
+#                  deploy evidence and the matrix report.
+#   4. record    — if the contracts went on-chain but no ID branch was pushed
+#                  (matrix failed, a step failed, or the run was cancelled), pushes
+#                  the evidence to `redeploy/testnet-<ts>-rejected`. Preflight
+#                  blocks the next run until that branch is reviewed and deleted.
+#   5. release   — refuses to build unless the checked-out eas.json IDs have a
+#                  committed PASS matrix report (so `redeploy: false` can't ship an
+#                  unaccepted APK either), then builds the `preview` APK on EAS and
+#                  uploads Noir.apk, the deploy evidence and the matrix report.
+#
+# One-time setup (Settings → Secrets and variables → Actions):
+#   STELLAR_DEPLOYER_SECRET  secret key (S…) of the funded Testnet deployer/admin
+#   EXPO_TOKEN               expo.dev → Account settings → Access tokens
+#   RELEASE_PR_TOKEN         (optional) fine-grained PAT with contents + pull
+#                            requests write. A PR opened with the default
+#                            GITHUB_TOKEN does not trigger CI, so the required
+#                            `test` check never reports on it; a PAT avoids that.
+# Without RELEASE_PR_TOKEN, enable Settings → Actions → General → "Allow GitHub
+# Actions to create and approve pull requests", then close and reopen the ID PR
+# to start its CI. If the PR cannot be opened, the branch is still pushed.
+#
+# Every redeploy mints brand-new contract IDs (clean slate, not an upgrade).
+name: Redeploy contracts + release APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      redeploy:
+        description: 'Redeploy the contracts first (off = only rebuild the APK from base_branch)'
+        type: boolean
+        default: true
+      base_branch:
+        description: 'Branch to redeploy from and open the ID PR into (or to build the APK from when redeploy is off)'
+        type: choice
+        options: [instaward-development]   # CLAUDE.md: changes land on instaward-development first
+        default: instaward-development
+      release_tag:
+        description: 'Release to attach Noir.apk to (created as a pre-release if it does not exist)'
+        type: string
+        default: Beta-Test
+
+concurrency:
+  group: redeploy-release
+  cancel-in-progress: false
+
+env:
+  STELLAR_CLI_VERSION: '28.0.0'
+
+jobs:
+  deploy:
+    name: Redeploy contracts to Testnet
+    if: inputs.redeploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      evidence: ${{ steps.redeploy.outputs.evidence }}
+      device: ${{ steps.redeploy.outputs.device }}
+      agent: ${{ steps.redeploy.outputs.agent }}
+      escrow: ${{ steps.redeploy.outputs.escrow }}
+      branch: ${{ steps.names.outputs.branch }}
+      sha: ${{ steps.sha.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.base_branch }}
+          persist-credentials: false
+
+      # Every later job checks out this exact commit, so a push to base_branch
+      # mid-run can't mix different source into the matrix, ID PR or APK.
+      - name: Record source commit
+        id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          # Must match backend/rust-toolchain.toml (see contracts.yml).
+          toolchain: '1.98.1'
+          targets: wasm32v1-none
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            backend/target
+          # Exact key only (no restore-keys prefix): this job later holds the
+          # deployer key, so it never restores a cache another job wrote.
+          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
+
+      # ImageOS (e.g. ubuntu24) changes when ubuntu-latest moves to a new image,
+      # whose system libraries the cached binary may not link against.
+      - name: Runner image
+        id: image
+        run: echo "os=$ImageOS" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Stellar CLI
+        id: stellar-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/stellar
+          key: ${{ runner.os }}-${{ steps.image.outputs.os }}-stellar-cli-${{ env.STELLAR_CLI_VERSION }}
+
+      - name: Install Stellar CLI
+        if: steps.stellar-cache.outputs.cache-hit != 'true'
+        run: |
+          # stellar-cli links libudev + libdbus (hardware-wallet / keyring support).
+          sudo apt-get update -q
+          sudo apt-get install -y -q libudev-dev libdbus-1-dev pkg-config
+          cargo install --locked stellar-cli --version "$STELLAR_CLI_VERSION"
+
+      # Everything that can fail after the deploy is checked first, so a bad
+      # base branch or eas.json never leaves fresh contracts nobody points at.
+      - name: Preflight
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BASE: ${{ inputs.base_branch }}
+          HAS_EXPO_TOKEN: ${{ secrets.EXPO_TOKEN != '' }}
+        run: |
+          [ "$HAS_EXPO_TOKEN" = true ] || { echo "::error::EXPO_TOKEN is not set — the APK build would fail after the deploy"; exit 1; }
+          grep -q GITHUB_OUTPUT scripts/redeploy-contracts.sh \
+            || { echo "::error::$BASE's redeploy-contracts.sh predates this workflow"; exit 1; }
+          [ -x scripts/check-matrix-report.sh ] || { echo "::error::$BASE has no scripts/check-matrix-report.sh"; exit 1; }
+          ./scripts/propagate-contract-ids.sh --check
+          # A leftover redeploy branch means eas.json here may be stale (ID PR not
+          # merged yet) or an unaccepted deploy hasn't been reviewed (…-rejected).
+          # Merge or review it, then delete the branch, before redeploying.
+          LEFT=$(gh api "repos/$REPO/git/matching-refs/heads/redeploy/testnet-" -q '.[].ref' | sed 's|refs/heads/||' | xargs)
+          [ -z "$LEFT" ] || { echo "::error::Redeploy branch(es) still on origin: $LEFT — merge (ID PR) or review (-rejected) and delete them first"; exit 1; }
+
+      # Never deploy contracts whose tests fail. payment_escrow contractimport!s
+      # the other two WASMs, so they are built first.
+      - name: Test contracts
+        working-directory: backend
+        run: |
+          cargo build --release --target wasm32v1-none -p agent-registry -p device-registry
+          cargo build --release --target wasm32v1-none -p payment-escrow
+          HOST=$(rustc -vV | awk '/host/{print $2}')
+          cargo test -p device-registry -p agent-registry -p payment-escrow --target "$HOST"
+
+      - name: Load deployer identity
+        env:
+          STELLAR_DEPLOYER_SECRET: ${{ secrets.STELLAR_DEPLOYER_SECRET }}
+        run: |
+          [ -n "$STELLAR_DEPLOYER_SECRET" ] || { echo "::error::STELLAR_DEPLOYER_SECRET is not set"; exit 1; }
+          mkdir -p ~/.config/stellar/identity
+          umask 077
+          printf 'secret_key = "%s"\n' "$STELLAR_DEPLOYER_SECRET" > ~/.config/stellar/identity/deployer.toml
+          echo "Deployer: $(stellar keys address deployer)"
+
+      - name: Redeploy + initialize
+        id: redeploy
+        run: |
+          NETWORK=testnet DEPLOYER=deployer ./scripts/redeploy-contracts.sh
+          cat "$(grep -m1 '^evidence=' "$GITHUB_OUTPUT" | cut -d= -f2)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove deployer key
+        if: always()
+        run: rm -f ~/.config/stellar/identity/deployer.toml
+
+      - name: Name redeploy branch
+        id: names
+        if: always() && steps.redeploy.outputs.evidence
+        env:
+          EVIDENCE: ${{ steps.redeploy.outputs.evidence }}
+        run: |
+          # Must match the Preflight glob redeploy/testnet-*.
+          echo "branch=redeploy/testnet-$(basename "$EVIDENCE" .md | sed 's/^deploy-testnet-//; s/\.partial$//')" >> "$GITHUB_OUTPUT"
+
+      # Keep the record of what went on-chain even if a later job fails.
+      - name: Save deploy evidence
+        if: always() && steps.redeploy.outputs.evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-evidence
+          path: ${{ steps.redeploy.outputs.evidence }}
+
+  # Acceptance gate (deployment.md → issue #24 handoff, step 3). This job runs
+  # third-party npm/Vitest code, so it has no secrets, a read-only token and no
+  # credentials in .git/config. Only its report leaves it, as an artifact.
+  matrix:
+    name: Security matrix (new contracts)
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      report: ${{ steps.run.outputs.report }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.deploy.outputs.sha }}
+          persist-credentials: false
+
+      # No dependency cache: this job's npm code must not be able to write
+      # anything that a later run restores.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.4
+
+      - name: Install security matrix
+        working-directory: sdk/agent-sdk
+        run: npm ci --ignore-scripts
+
+      - name: Run security matrix
+        id: run
+        working-directory: sdk/agent-sdk
+        env:
+          NOIR_DEVICE_REGISTRY: ${{ needs.deploy.outputs.device }}
+          NOIR_AGENT_REGISTRY: ${{ needs.deploy.outputs.agent }}
+          NOIR_PAYMENT_ESCROW: ${{ needs.deploy.outputs.escrow }}
+        run: |
+          set +e
+          npm run test:security-matrix
+          RC=$?
+          set -e
+          mapfile -t NEW < <(git -C ../.. ls-files --others --exclude-standard 'deploy-evidence/week4-security-matrix-*.md')
+          REPORT=""
+          if [ "${#NEW[@]}" -eq 1 ] && [[ "${NEW[0]}" =~ ^deploy-evidence/week4-security-matrix-[0-9A-Z]+\.md$ ]]; then
+            REPORT="${NEW[0]}"
+            cat "../../$REPORT" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          # Written last, so it overrides anything the npm code appended.
+          echo "report=$REPORT" >> "$GITHUB_OUTPUT"
+          [ "$RC" -eq 0 ] || { echo "::error::Security matrix failed (exit $RC) — IDs not propagated, no APK built"; exit 1; }
+          [ "${#NEW[@]}" -eq 1 ] || { echo "::error::Expected one new matrix report, found ${#NEW[@]}"; exit 1; }
+          ../../scripts/check-matrix-report.sh "../../${NEW[0]}" \
+            "$NOIR_DEVICE_REGISTRY" "$NOIR_AGENT_REGISTRY" "$NOIR_PAYMENT_ESCROW"
+
+      - name: Save matrix report
+        if: always() && steps.run.outputs.report
+        uses: actions/upload-artifact@v4
+        with:
+          name: matrix-report
+          path: ${{ steps.run.outputs.report }}
+
+  propagate:
+    name: Propagate accepted IDs
+    needs: [deploy, matrix]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      branch: ${{ steps.push.outputs.branch }}
+      sha: ${{ steps.push.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.deploy.outputs.sha }}
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: deploy-evidence
+          path: deploy-evidence
+
+      # The report comes from the job that ran npm code: download it on its own
+      # so it can't overwrite the deploy evidence, and accept one file only.
+      - uses: actions/download-artifact@v4
+        with:
+          name: matrix-report
+          path: ${{ runner.temp }}/matrix-report
+
+      - name: Take matrix report
+        env:
+          MATRIX: ${{ needs.matrix.outputs.report }}
+        run: |
+          mapfile -t FILES < <(find "$RUNNER_TEMP/matrix-report" -type f)
+          [ "${#FILES[@]}" -eq 1 ] && [ "$(basename "${FILES[0]}")" = "$(basename "$MATRIX")" ] \
+            || { echo "::error::matrix-report artifact must hold exactly $MATRIX"; exit 1; }
+          mv "${FILES[0]}" "$MATRIX"
+
+      # Don't take the matrix job's word for it: re-check the report, and that
+      # the evidence file names the same IDs, with this job's own checkout.
+      - name: Verify accepted contracts
+        env:
+          EVIDENCE: ${{ needs.deploy.outputs.evidence }}
+          MATRIX: ${{ needs.matrix.outputs.report }}
+          NEW_DEVICE: ${{ needs.deploy.outputs.device }}
+          NEW_AGENT: ${{ needs.deploy.outputs.agent }}
+          NEW_ESCROW: ${{ needs.deploy.outputs.escrow }}
+        run: |
+          ./scripts/check-matrix-report.sh "$MATRIX" "$NEW_DEVICE" "$NEW_AGENT" "$NEW_ESCROW"
+          for kv in "DEVICE_REGISTRY:$NEW_DEVICE" "AGENT_REGISTRY:$NEW_AGENT" "PAYMENT_ESCROW:$NEW_ESCROW"; do
+            grep -qx "EXPO_PUBLIC_${kv%%:*}_CONTRACT=${kv#*:}" "$EVIDENCE" \
+              || { echo "::error::$EVIDENCE does not list ${kv%%:*} ${kv#*:}"; exit 1; }
+          done
+
+      # The script validates every old/new ID and hash before it edits anything.
+      - name: Propagate new IDs and hashes across the repo
+        env:
+          EVIDENCE: ${{ needs.deploy.outputs.evidence }}
+        run: |
+          ./scripts/propagate-contract-ids.sh "$EVIDENCE" > "$RUNNER_TEMP/changed.txt"
+          cat "$RUNNER_TEMP/changed.txt"
+
+      - name: Push ID branch and open PR
+        id: push
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN || github.token }}
+          REPO: ${{ github.repository }}
+          BASE: ${{ inputs.base_branch }}
+          BRANCH: ${{ needs.deploy.outputs.branch }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EVIDENCE: ${{ needs.deploy.outputs.evidence }}
+          MATRIX: ${{ needs.matrix.outputs.report }}
+          NEW_DEVICE: ${{ needs.deploy.outputs.device }}
+          NEW_AGENT: ${{ needs.deploy.outputs.agent }}
+          NEW_ESCROW: ${{ needs.deploy.outputs.escrow }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          # Only the propagated files, the evidence file and the matrix report.
+          xargs -a "$RUNNER_TEMP/changed.txt" -d '\n' git add --
+          git add -- "$EVIDENCE" "$MATRIX"
+          git commit -F - <<MSG
+          chore(contracts): redeploy to Testnet and propagate new contract IDs
+
+          Redeployed by the redeploy-release workflow ($RUN_URL).
+          Evidence: $EVIDENCE
+          Security matrix: $MATRIX (PASS)
+
+          device_registry: $NEW_DEVICE
+          agent_registry: $NEW_AGENT
+          payment_escrow: $NEW_ESCROW
+
+          Co-Authored-By: Johnrick Rabara <jrabara101@gmail.com>
+          Co-Authored-By: Jefferson Tuparan <jeffersontuparanst@gmail.com>
+          MSG
+          git push "https://x-access-token:$GH_TOKEN@github.com/$REPO.git" "$BRANCH"
+          printf 'branch=%s\nsha=%s\n' "$BRANCH" "$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          {
+            echo "Automated Testnet redeploy ([workflow run]($RUN_URL))."
+            echo
+            echo "| Contract | ID |"
+            echo "|---|---|"
+            echo "| device_registry | \`$NEW_DEVICE\` |"
+            echo "| agent_registry | \`$NEW_AGENT\` |"
+            echo "| payment_escrow | \`$NEW_ESCROW\` |"
+            echo
+            echo "Security matrix: \`$MATRIX\` — **PASS** (all 20 outcomes) against these IDs."
+            echo
+            echo "Evidence: \`$EVIDENCE\`. The APK built from this branch is attached to the \`$RELEASE_TAG\` release."
+            echo
+            echo "Only IDs and WASM hashes were swapped. Before merging, check the prose around them by hand:"
+            echo "- deploy dates and \"see deploy-evidence/…\" pointers (README, PROGRESS, CLAUDE.md, docs/)"
+            echo "- \`docs/walkthrough.md\` and \`docs/evidence-package.md\` still describe the previous deploy on purpose; add this deploy to them"
+            echo "- the expected hashes in \`.github/workflows/contracts.yml\` (workflow files are not touched)"
+          } > "$RUNNER_TEMP/pr.md"
+          gh pr create --base "$BASE" --head "$BRANCH" \
+            --title "chore(contracts): redeploy to Testnet and propagate new contract IDs" \
+            --body-file "$RUNNER_TEMP/pr.md" \
+            || echo "::warning::Could not open the PR (see the setup notes at the top of this workflow). Branch $BRANCH is pushed."
+
+  # A deploy that went on-chain but has no ID branch (matrix rejected it, a
+  # step failed, or the run was cancelled) is still live on Testnet. Record it
+  # in git, not only in an expiring artifact, from a fresh checkout.
+  record:
+    name: Record unfinished deploy
+    needs: [deploy, matrix, propagate]
+    if: always() && needs.deploy.outputs.evidence != '' && needs.propagate.outputs.branch == ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.deploy.outputs.sha || inputs.base_branch }}
+          persist-credentials: false
+
+      # Best effort: if the upload never happened, the commit below still
+      # records the IDs from the deploy job's outputs.
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: deploy-evidence
+          path: deploy-evidence
+
+      - uses: actions/download-artifact@v4
+        if: needs.matrix.outputs.report != ''
+        continue-on-error: true
+        with:
+          name: matrix-report
+          path: ${{ runner.temp }}/matrix-report
+
+      - name: Push rejected-deploy branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          BRANCH: ${{ needs.deploy.outputs.branch }}-rejected
+          EVIDENCE: ${{ needs.deploy.outputs.evidence }}
+          MATRIX: ${{ needs.matrix.outputs.report }}
+          MATRIX_RESULT: ${{ needs.matrix.result }}
+          DEVICE: ${{ needs.deploy.outputs.device }}
+          AGENT: ${{ needs.deploy.outputs.agent }}
+          ESCROW: ${{ needs.deploy.outputs.escrow }}
+        run: |
+          case "$EVIDENCE" in
+            *.partial.md) WHY="were only partly deployed: redeploy-contracts.sh failed" ;;
+            *) case "$MATRIX_RESULT" in
+                 success) WHY="passed the security matrix, but propagating their IDs failed" ;;
+                 failure) WHY="did not pass the security-matrix gate" ;;
+                 *)       WHY="were not tested: the run stopped before the security matrix finished" ;;
+               esac ;;
+          esac
+          if [ ! -f "$EVIDENCE" ]; then
+            mkdir -p "$(dirname "$EVIDENCE")"
+            printf '# Evidence artifact missing (%s)\n\n- device_registry: %s\n- agent_registry: %s\n- payment_escrow: %s\n' \
+              "$RUN_URL" "${DEVICE:-unknown}" "${AGENT:-unknown}" "${ESCROW:-unknown}" > "$EVIDENCE"
+          fi
+          SRC="$RUNNER_TEMP/matrix-report/$(basename "${MATRIX:-none}")"
+          if [ -n "$MATRIX" ] && [ -f "$SRC" ] && [ "$(find "$RUNNER_TEMP/matrix-report" -type f | wc -l)" -eq 1 ]; then
+            mv "$SRC" "$MATRIX"
+          else
+            MATRIX=""
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add -- "$EVIDENCE" ${MATRIX:+"$MATRIX"}
+          git commit -F - <<MSG
+          chore(contracts): record unfinished Testnet deploy (not accepted)
+
+          These contracts were deployed by the redeploy-release workflow
+          ($RUN_URL) and $WHY. Their IDs were not propagated and no APK was
+          built. Do not merge; delete this branch once the cause is understood,
+          then re-run the workflow.
+
+          Evidence: $EVIDENCE
+          Security matrix: ${MATRIX:-no report}
+
+          Co-Authored-By: Johnrick Rabara <jrabara101@gmail.com>
+          Co-Authored-By: Jefferson Tuparan <jeffersontuparanst@gmail.com>
+          MSG
+          git push "https://x-access-token:$GH_TOKEN@github.com/$REPO.git" "$BRANCH"
+          echo "::error::Deploy not accepted ($WHY) — evidence pushed to $BRANCH"
+
+  release:
+    name: Build APK and attach to release
+    needs: [deploy, propagate]
+    # After an accepted redeploy, or alone when redeploy is off.
+    # !cancelled(): cancelling the run must stop an APK publish.
+    if: ${{ !cancelled() && (needs.propagate.result == 'success' || !inputs.redeploy) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # release create/edit/upload
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.propagate.outputs.sha || inputs.base_branch }}
+          persist-credentials: false   # gh uses GH_TOKEN; yarn code runs below
+
+      # Same acceptance rule for both paths (fresh redeploy or `redeploy: false`):
+      # the IDs this APK will talk to must have a committed PASS matrix report.
+      # Hand-run reports count too; they must come from a run whose Vitest
+      # command exited 0 (docs/testing.md), which the report can't prove.
+      - name: Require accepted contracts
+        id: ids
+        run: |
+          eas_id() { jq -r ".build.base.env.$1" frontend/eas.json; }
+          IDS=("$(eas_id EXPO_PUBLIC_DEVICE_REGISTRY_CONTRACT)" "$(eas_id EXPO_PUBLIC_AGENT_REGISTRY_CONTRACT)" "$(eas_id EXPO_PUBLIC_PAYMENT_ESCROW_CONTRACT)")
+          printf 'device=%s\nagent=%s\nescrow=%s\n' "${IDS[@]}" >> "$GITHUB_OUTPUT"
+          for r in deploy-evidence/week4-security-matrix-*.md; do
+            [ -f "$r" ] || continue
+            if ./scripts/check-matrix-report.sh "$r" "${IDS[@]}"; then
+              echo "report=$r" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "::error::No PASS security-matrix report for eas.json's contracts (${IDS[*]}) — refusing to publish an APK against unaccepted contracts"
+          exit 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.4
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: 20.x   # eas.json requires >= 20.5.0
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        working-directory: frontend
+        # Only needed so eas-cli can read the app config; the build runs on EAS.
+        run: yarn install --frozen-lockfile --ignore-scripts
+
+      # The `preview` profile builds an APK; contract IDs come from eas.json `base`.
+      # After a redeploy this is the not-yet-merged ID branch on purpose: the
+      # APK has to point at the new contracts, which only that branch knows.
+      - name: Build APK on EAS
+        working-directory: frontend
+        run: |
+          # Output goes outside the project so EAS never archives it.
+          eas build --platform android --profile preview --non-interactive --wait --json > "$RUNNER_TEMP/build.json"
+          URL=$(jq -r '.[0].artifacts.buildUrl' "$RUNNER_TEMP/build.json")
+          [ -n "$URL" ] && [ "$URL" != "null" ] || { echo "::error::EAS returned no APK URL"; cat "$RUNNER_TEMP/build.json"; exit 1; }
+          curl -fsSL "$URL" -o "$RUNNER_TEMP/Noir.apk"
+          sha256sum "$RUNNER_TEMP/Noir.apk"
+
+      # An existing release keeps its tag and its own notes; the block between
+      # the noir-apk-build markers is rewritten on every run so the notes always
+      # say which commit and contracts the attached APK was built from.
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EVIDENCE: ${{ needs.deploy.outputs.evidence }}
+          MATRIX: ${{ steps.ids.outputs.report }}
+          DEVICE_ID: ${{ steps.ids.outputs.device }}
+          AGENT_ID: ${{ steps.ids.outputs.agent }}
+          ESCROW_ID: ${{ steps.ids.outputs.escrow }}
+        run: |
+          SHA=$(git rev-parse HEAD)
+          {
+            echo "<!-- noir-apk-build -->"
+            echo "**Noir.apk** built from [\`${SHA:0:7}\`](https://github.com/$REPO/commit/$SHA) by [this workflow run]($RUN_URL)."
+            echo
+            echo "| Contract (Testnet) | ID |"
+            echo "|---|---|"
+            echo "| device_registry | \`$DEVICE_ID\` |"
+            echo "| agent_registry | \`$AGENT_ID\` |"
+            echo "| payment_escrow | \`$ESCROW_ID\` |"
+            echo
+            echo "Security matrix: \`$MATRIX\` (PASS)."
+            echo "<!-- /noir-apk-build -->"
+          } > "$RUNNER_TEMP/build-block.md"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release view "$TAG" --json body -q .body > "$RUNNER_TEMP/old-notes.md"
+            python3 - "$RUNNER_TEMP/old-notes.md" "$RUNNER_TEMP/build-block.md" > "$RUNNER_TEMP/notes.md" <<'PY'
+          import re, sys
+          old, block = (open(p).read() for p in sys.argv[1:3])
+          pat = re.compile(r"<!-- noir-apk-build -->.*?<!-- /noir-apk-build -->\n?", re.S)
+          print(pat.sub(lambda _: block, old) if pat.search(old) else old.rstrip() + "\n\n" + block, end="")
+          PY
+            gh release edit "$TAG" --notes-file "$RUNNER_TEMP/notes.md"
+          else
+            gh release create "$TAG" --prerelease --target "$SHA" --title "$TAG" \
+              --notes-file "$RUNNER_TEMP/build-block.md"
+          fi
+          # Old reports and evidence describe contracts this APK no longer uses.
+          gh release view "$TAG" --json assets -q '.assets[].name' \
+            | { grep -E '^(week4-security-matrix|deploy-testnet)-' || true; } \
+            | while read -r a; do gh release delete-asset "$TAG" "$a" -y; done
+          # Without a redeploy, attach the committed evidence for these IDs.
+          [ -n "$EVIDENCE" ] || EVIDENCE=$(grep -lx "EXPO_PUBLIC_DEVICE_REGISTRY_CONTRACT=$DEVICE_ID" deploy-evidence/deploy-*.md | head -1 || true)
+          FILES=("$RUNNER_TEMP/Noir.apk" "$MATRIX")
+          [ -n "$EVIDENCE" ] && [ -f "$EVIDENCE" ] && FILES+=("$EVIDENCE")
+          gh release upload "$TAG" "${FILES[@]}" --clobber
+          echo "Uploaded to https://github.com/$REPO/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"

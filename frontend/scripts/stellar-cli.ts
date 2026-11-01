@@ -106,7 +106,7 @@ async function cmdRead(args: string[]) {
 }
 
 const HELP = `
-Stellar CLI — account management for Noir Wallet
+Stellar CLI — account management for Noir
 
 USAGE
   npm run stellar <command> [args]

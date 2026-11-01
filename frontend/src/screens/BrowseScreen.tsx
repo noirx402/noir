@@ -300,7 +300,7 @@ function BrowserView({ url, onClose, onVisited, testnet }: { url: string; onClos
         return respond(req.id, dappError(DappError.invalidRequest, `Noir is on ${network === 'mainnet' ? 'Mainnet' : 'Testnet'}. Switch networks in Noir and try again.`))
       }
       if (req.params.address && req.params.address !== address) {
-        return respond(req.id, dappError(DappError.invalidRequest, 'That account is not the active Noir wallet'))
+        return respond(req.id, dappError(DappError.invalidRequest, 'That account is not the active Noir account'))
       }
       let summary: TxSummary
       try {

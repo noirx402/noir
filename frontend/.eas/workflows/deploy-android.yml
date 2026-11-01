@@ -1,0 +1,29 @@
+# Build a production Android App Bundle and submit it to Google Play
+# (internal track, draft — see eas.json `submit.production`) on every push to main.
+#
+# One-time setup:
+#   1. Link the GitHub repo in expo.dev → Project settings → GitHub, base directory `frontend`.
+#   2. Upload the Google Play service-account JSON key: `eas credentials -p android`
+#      → production → Google Service Account. Never commit the key.
+#   3. Upload the first AAB to Play Console by hand once (Google API requirement).
+name: Deploy Android to Play Store
+
+on:
+  push:
+    branches: ['main']
+
+jobs:
+  build_android:
+    name: Build Android (production AAB)
+    type: build
+    params:
+      platform: android
+      profile: production
+
+  submit_android:
+    name: Submit to Google Play
+    needs: [build_android]
+    type: submit
+    params:
+      build_id: ${{ needs.build_android.outputs.build_id }}
+      profile: production

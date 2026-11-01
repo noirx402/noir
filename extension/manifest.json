@@ -2,9 +2,9 @@
   "manifest_version": 3,
   "name": "Noir",
   "short_name": "Noir",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Stellar wallet by Noir. Connect to Stellar dApps, sign transactions, and see your Noir tap-to-pay cards.",
-  "minimum_chrome_version": "111",
+  "minimum_chrome_version": "116",
   "icons": {
     "16": "icons/16.png",
     "32": "icons/32.png",
@@ -25,7 +25,8 @@
   },
   "permissions": [
     "storage",
-    "alarms"
+    "alarms",
+    "activeTab"
   ],
   "host_permissions": [
     "https://horizon-testnet.stellar.org/*",
@@ -63,5 +64,8 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
-  "homepage_url": "https://rylsherdamz-rgb.github.io/Noir_Wallet/docs/extension/"
+  "homepage_url": "https://noirx402.github.io/noir/docs/extension/",
+  "optional_permissions": [
+    "notifications"
+  ]
 }

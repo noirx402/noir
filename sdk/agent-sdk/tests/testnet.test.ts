@@ -38,4 +38,31 @@ describe.runIf(process.env.NOIR_TESTNET === '1')('Noir Testnet (live)', () => {
     for (const e of events) expect(ours.has(e.contractId)).toBe(true)
     expect(events.map((e) => e.ledger)).toEqual([...events.map((e) => e.ledger)].sort((a, b) => a - b))
   }, 180_000)
+
+  it('lifecycle through the SDK alone: register → fund → tap → claim → unlinkDevice', async () => {
+    const XLM = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC'
+    const [owner, agent, merchant] = [Keypair.random(), Keypair.random(), Keypair.random()]
+    for (const kp of [owner, agent, merchant]) {
+      expect((await fetch(`https://friendbot.stellar.org/?addr=${kp.publicKey()}`)).ok).toBe(true)
+    }
+    const signer = keypairSigner(owner.secret())
+    const deviceHash = Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) => b.toString(16).padStart(2, '0')).join('')
+
+    await noir.execute(signer, { kind: 'registerDevice', deviceHash, agent: agent.publicKey() })
+    await noir.execute(signer, { kind: 'registerAgent', deviceHash, agent: agent.publicKey(), asset: XLM, maxAmount: 50_000_000n })
+    await noir.execute(signer, { kind: 'fundEscrow', deviceHash, token: XLM, amount: 30_000_000n })
+    expect(await noir.getDeviceOwner(deviceHash)).toBe(owner.publicKey())
+    expect(await noir.getEscrowToken(deviceHash)).toBe(XLM)
+
+    await noir.authorizePayment({ agent: keypairSigner(agent.secret()), deviceHash, merchant: merchant.publicKey(), asset: XLM, amount: 10_000_000n })
+    expect(await noir.getPendingBalance(merchant.publicKey())).toBe(10_000_000n)
+    await noir.claim({ merchant: keypairSigner(merchant.secret()), token: XLM })
+
+    const { escrowReturned, hashes } = await noir.unlinkDevice({ owner: signer, deviceHash })
+    expect(escrowReturned).toBe(20_000_000n)
+    expect(hashes).toHaveLength(3)
+    expect(await noir.getDeviceOwner(deviceHash)).toBeNull()
+    expect(await noir.getPolicy(deviceHash)).toBeNull()
+    expect(await noir.getEscrowBalance(deviceHash)).toBe(0n)
+  }, 300_000)
 })

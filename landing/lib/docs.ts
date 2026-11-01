@@ -4,7 +4,7 @@ import { OG_IMAGE, SITE_URL } from './site'
 export const DOCS = [
   { slug: '', title: 'Overview', description: 'How Noir works for developers: devices, agent policies, escrow, and the ways to integrate.' },
   { slug: 'quickstart', title: 'Quickstart', description: 'Read a Noir card policy and check a payment in five minutes, with the SDK or the REST API.' },
-  { slug: 'sdk', title: 'TypeScript SDK', description: 'Reference for @noir-wallet/agent-sdk: reads, payment checks, tap-to-pay, owner operations, events and signers.' },
+  { slug: 'sdk', title: 'TypeScript SDK', description: 'Reference for @noirx402/agent-sdk: reads, payment checks, tap-to-pay, owner operations, events and signers.' },
   { slug: 'api', title: 'REST API & API keys', description: 'Self-host the Noir API gateway: API keys, scopes, rate limits, endpoints, non-custodial transactions and errors.' },
   { slug: 'extension', title: 'Browser extension', description: 'Noir for Chrome: the window.noir.stellar SEP-43 provider, Stellar Wallets Kit support, and how dApps connect and request signatures.' },
   { slug: 'webhooks', title: 'Webhooks & events', description: 'Every Noir on-chain event, signed webhook delivery, and how to verify the X-Noir-Signature header.' },

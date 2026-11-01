@@ -4,7 +4,8 @@ import {
   TESTNET, cursorLedger, decodeEvent, eventToJSON, refusalReason, normalizeDeviceHash, parseContractError,
   signWebhookBody, verifyWebhookSignature, startWebhookRelay, SIGNATURE_HEADER, keypairSigner,
   toCall, toHex, fromHex, toStroops, fromStroops, walletSigner, noirExtension, noirExtensionSigner,
-  type NoirAgentPolicy, type NoirEvent, type NoirAgentClient,
+  parseDeviceInfo, NoirAgentClient,
+  type NoirAgentPolicy, type NoirEvent,
 } from '../src/index.js'
 
 const C = TESTNET.contracts
@@ -87,6 +88,8 @@ describe('helpers', () => {
   it('names contract errors', () => {
     const e = parseContractError('paymentEscrow', 'authorize', 'HostError: Error(Contract, #3)')
     expect(e?.errorName).toBe('AgentNotAuthorized')
+    expect(parseContractError('paymentEscrow', 'defund_escrow', 'Error(Contract, #9)')?.errorName).toBe('InvalidAsset')
+    expect(parseContractError('agentRegistry', 'revoke_agent', 'Error(Contract, #5)')?.errorName).toBe('NotOwner')
     expect(parseContractError('paymentEscrow', 'claim', 'network down')).toBeNull()
   })
   it('keypairSigner signs without exposing the secret', async () => {
@@ -163,6 +166,22 @@ describe('toCall', () => {
     const forever = toCall(owner, { kind: 'registerAgent', deviceHash: HASH, agent, asset, maxAmount: 0n })
     expect(native(forever.args[5])).toBe(0n)
   })
+
+  it('covers the device lifecycle: register, sweep, revoke', () => {
+    const reg = toCall(owner, { kind: 'registerDevice', deviceHash: HASH, agent })
+    expect([reg.contract, reg.method]).toEqual(['deviceRegistry', 'register'])
+    const [who, device, regAgent] = reg.args.map(native)
+    expect([who, toHex(device as Uint8Array), regAgent]).toEqual([owner, HASH, agent])
+
+    const sweep = toCall(owner, { kind: 'sweepOnRevoke', deviceHash: HASH, token: asset, agent })
+    expect([sweep.contract, sweep.method]).toEqual(['paymentEscrow', 'sweep_on_revoke'])
+    const [token, sweepDevice, sweepAgent] = sweep.args.map(native)
+    expect([token, toHex(sweepDevice as Uint8Array), sweepAgent]).toEqual([asset, HASH, agent])
+
+    const revoke = toCall(owner, { kind: 'revokeDevice', deviceHash: HASH })
+    expect([revoke.contract, revoke.method]).toEqual(['deviceRegistry', 'revoke'])
+    expect(revoke.args.map(native)[0]).toBe(owner)
+  })
 })
 
 describe('hex helpers', () => {
@@ -211,5 +230,56 @@ describe('walletSigner', () => {
       const signer = await noirExtensionSigner()
       expect(signer.publicKey).toBe(agent)
     } finally { delete g.window }
+  })
+})
+
+describe('device registry reads', () => {
+  const owner = Keypair.random().publicKey()
+  const deviceInfo = (status: number, createdAt: bigint) => xdr.ScVal.scvMap([
+    new xdr.ScMapEntry({ key: sym('agent'), val: addr(agent) }),
+    new xdr.ScMapEntry({ key: sym('created_at'), val: nativeToScVal(createdAt, { type: 'u64' }) }),
+    new xdr.ScMapEntry({ key: sym('owner'), val: addr(owner) }),
+    new xdr.ScMapEntry({ key: sym('status'), val: nativeToScVal(status, { type: 'u32' }) }),
+  ])
+
+  /** A client whose simulations answer with `retval`, or fail with contract error `code`. */
+  function stubbed(answer: { retval: xdr.ScVal } | { code: number }) {
+    const client = new NoirAgentClient()
+    const calls: string[] = []
+    ;(client.server as { simulateTransaction: unknown }).simulateTransaction = async (tx: { operations: { func: xdr.HostFunction }[] }) => {
+      calls.push(tx.operations[0].func.invokeContract().functionName().toString())
+      return 'retval' in answer
+        ? { result: { retval: answer.retval } }
+        : { error: `HostError: Error(Contract, #${answer.code})` }
+    }
+    return { client, calls }
+  }
+
+  it('parseDeviceInfo decodes owner, agent, active and createdAt', () => {
+    expect(parseDeviceInfo(deviceInfo(0, 1_760_000_000n))).toEqual({
+      owner, agent, active: true, createdAt: new Date(1_760_000_000_000),
+    })
+    const inactive = parseDeviceInfo(deviceInfo(1, 0n))
+    expect(inactive.active).toBe(false)
+    expect(inactive.createdAt).toBeNull()
+  })
+
+  it('getDevice calls get_device and returns the record', async () => {
+    const { client, calls } = stubbed({ retval: deviceInfo(0, 1_760_000_000n) })
+    expect(await client.getDevice(HASH)).toMatchObject({ owner, agent, active: true })
+    expect(calls).toEqual(['get_device'])
+  })
+
+  it('getDevice returns null for an unregistered device', async () => {
+    const { client } = stubbed({ code: 2 }) // DeviceNotFound
+    expect(await client.getDevice(HASH)).toBeNull()
+  })
+
+  it('isDeviceAuthorized calls is_authorized and returns the bool', async () => {
+    const yes = stubbed({ retval: xdr.ScVal.scvBool(true) })
+    expect(await yes.client.isDeviceAuthorized(HASH, agent)).toBe(true)
+    expect(yes.calls).toEqual(['is_authorized'])
+    const no = stubbed({ retval: xdr.ScVal.scvBool(false) })
+    expect(await no.client.isDeviceAuthorized(HASH, agent)).toBe(false)
   })
 })

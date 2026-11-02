@@ -7,9 +7,9 @@ polyfills).
 
 - **Patch base:** kit `9db6b36` (v2.8.0, 2026-10-28). It applies cleanly there;
   v2.8.0 only renamed Freighter to Varial and left `ModuleInterface` unchanged.
-- **Verified at `6f317cf` (v2.7.1):** `deno test sdk/` (the kit's 28 tests plus
-  these 4, 32/32), and `deno check`, `deno lint`, `deno fmt --check` on every
-  touched file. Re-run them on v2.8.0 before opening the PR (commands below).
+- **Verified on `9db6b36` (v2.8.0), 2026-11-02:** `deno test sdk/` (the kit's
+  28 tests plus these 4, 32/32), and `deno check`, `deno lint`,
+  `deno fmt --check` on every touched file. Also verified on v2.7.1 (`6f317cf`).
 - `npm run test:e2e` in `extension/` runs this module against the real
   extension (passing 2026-11-01).
 - The patch leaves out `src/deno.lock`: running the tests adds `@std/assert`

@@ -15,6 +15,9 @@ polyfills).
 - The patch leaves out `src/deno.lock`: running the tests adds `@std/assert`
   to it, which upstream's own tests already need and is not ours to commit.
 
+**Upstream PR:** [Creit-Tech/Stellar-Wallets-Kit#124](https://github.com/Creit-Tech/Stellar-Wallets-Kit/pull/124)
+(opened 2026-11-02 from `rylsherdamz-rgb:feat/noir-wallet-module`).
+
 ## Opening the PR
 
 ```bash

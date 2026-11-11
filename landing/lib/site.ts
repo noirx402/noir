@@ -15,7 +15,11 @@ export const DESCRIPTION =
 export const REPO = 'https://github.com/noirx402/noir'
 export const REPO_TREE = `${REPO}/tree/main`
 export const REPO_BLOB = `${REPO}/blob/main`
-/** Latest GitHub release ("Beta Testing"). On a new release, update the tag, asset name and label together. */
+/**
+ * Latest GitHub release ("Beta Testing"). On a new release, update the tag, asset name and label together.
+ * .github/workflows/redeploy-release.yml reads RELEASE_TAG and the APK file name from the lines below and
+ * uploads each new APK there, so keep RELEASE_TAG a plain quoted string and APK_URL on one line.
+ */
 export const RELEASE_TAG = 'Beta-Testing'
 export const RELEASE_LABEL = 'Beta 1.0.0'
 export const RELEASE_URL = `${REPO}/releases/tag/${RELEASE_TAG}`

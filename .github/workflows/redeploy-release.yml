@@ -23,7 +23,13 @@
 #   5. release   — refuses to build unless the checked-out eas.json IDs have a
 #                  committed PASS matrix report (so `redeploy: false` can't ship an
 #                  unaccepted APK either), then builds the `preview` APK on EAS and
-#                  uploads Noir.apk, the deploy evidence and the matrix report.
+#                  uploads it, the deploy evidence and the matrix report. The APK
+#                  goes to the release and file name the site's Download button
+#                  links (RELEASE_TAG / APK_URL in landing/lib/site.ts), so the
+#                  site serves the new build without being redeployed.
+#
+# It also runs by itself on a push to main that changes the app (frontend/).
+# That run only does step 5: it never redeploys contracts.
 #
 # One-time setup (Settings → Secrets and variables → Actions):
 #   STELLAR_DEPLOYER_SECRET  secret key (S…) of the funded Testnet deployer/admin
@@ -40,6 +46,15 @@
 name: Redeploy contracts + release APK
 
 on:
+  # main is what the site is built from (pages.yml), so the APK it offers is
+  # rebuilt whenever the app changes there. Tests and docs don't change the APK.
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '!frontend/tests/**'
+      - '!frontend/testnet/**'
+      - '!frontend/**/*.md'
   workflow_dispatch:
     inputs:
       redeploy:
@@ -52,9 +67,9 @@ on:
         options: [instaward-development]   # CLAUDE.md: changes land on instaward-development first
         default: instaward-development
       release_tag:
-        description: 'Release to attach Noir.apk to (created as a pre-release if it does not exist)'
+        description: 'Release to attach the APK to. Empty = the release the site downloads from (landing/lib/site.ts)'
         type: string
-        default: Beta-Test
+        default: ''
 
 concurrency:
   group: redeploy-release
@@ -330,6 +345,8 @@ jobs:
           NEW_AGENT: ${{ needs.deploy.outputs.agent }}
           NEW_ESCROW: ${{ needs.deploy.outputs.escrow }}
         run: |
+          # No tag given = the release the site downloads from (see the release job).
+          RELEASE_TAG=${RELEASE_TAG:-$(sed -n "s/^export const RELEASE_TAG = '\([^']*\)'.*/\1/p" landing/lib/site.ts)}
           git config user.name "github-actions[bot]"
           git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
@@ -462,7 +479,8 @@ jobs:
   release:
     name: Build APK and attach to release
     needs: [deploy, propagate]
-    # After an accepted redeploy, or alone when redeploy is off.
+    # After an accepted redeploy, or alone when redeploy is off (always the case
+    # on a push to main: `inputs` is empty there, so no other job runs).
     # !cancelled(): cancelling the run must stop an APK publish.
     if: ${{ !cancelled() && (needs.propagate.result == 'success' || !inputs.redeploy) }}
     runs-on: ubuntu-latest
@@ -494,6 +512,34 @@ jobs:
           echo "::error::No PASS security-matrix report for eas.json's contracts (${IDS[*]}) — refusing to publish an APK against unaccepted contracts"
           exit 1
 
+      # The site's Download button is a fixed URL built in landing/lib/site.ts:
+      # releases/download/<RELEASE_TAG>/<file>. The APK is uploaded under exactly
+      # that tag and file name, so the button serves this build as soon as the
+      # upload finishes. A different release_tag still gets the APK, but the
+      # site keeps serving the one on its own release.
+      - name: Resolve release and APK name
+        id: target
+        env:
+          INPUT_TAG: ${{ inputs.release_tag }}
+        run: |
+          SITE_TAG=$(sed -n "s/^export const RELEASE_TAG = '\([^']*\)'.*/\1/p" landing/lib/site.ts)
+          SITE_APK=$(sed -n 's|^export const APK_URL = .*/\([^/`]*\.apk\)`.*|\1|p' landing/lib/site.ts)
+          [ -n "$SITE_TAG" ] && [ -n "$SITE_APK" ] \
+            || { echo "::error::Could not read RELEASE_TAG / APK_URL from landing/lib/site.ts"; exit 1; }
+          TAG=${INPUT_TAG:-$SITE_TAG}
+          [ "$TAG" = "$SITE_TAG" ] \
+            || echo "::warning::Uploading to '$TAG', but the site downloads from '$SITE_TAG' — its Download button will keep serving the old APK"
+          printf 'tag=%s\napk=%s\n' "$TAG" "$SITE_APK" >> "$GITHUB_OUTPUT"
+
+      # The deploy job's preflight checks this too, but that job is skipped
+      # whenever only the APK is rebuilt.
+      - name: Require EXPO_TOKEN
+        env:
+          HAS_EXPO_TOKEN: ${{ secrets.EXPO_TOKEN != '' }}
+        run: |
+          [ "$HAS_EXPO_TOKEN" = true ] \
+            || { echo "::error::EXPO_TOKEN is not set (Settings → Secrets and variables → Actions) — EAS cannot build the APK"; exit 1; }
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22.23.4
@@ -515,13 +561,34 @@ jobs:
       # APK has to point at the new contracts, which only that branch knows.
       - name: Build APK on EAS
         working-directory: frontend
+        env:
+          APK: ${{ runner.temp }}/${{ steps.target.outputs.apk }}
         run: |
           # Output goes outside the project so EAS never archives it.
           eas build --platform android --profile preview --non-interactive --wait --json > "$RUNNER_TEMP/build.json"
           URL=$(jq -r '.[0].artifacts.buildUrl' "$RUNNER_TEMP/build.json")
           [ -n "$URL" ] && [ "$URL" != "null" ] || { echo "::error::EAS returned no APK URL"; cat "$RUNNER_TEMP/build.json"; exit 1; }
-          curl -fsSL "$URL" -o "$RUNNER_TEMP/Noir.apk"
-          sha256sum "$RUNNER_TEMP/Noir.apk"
+          curl -fsSL "$URL" -o "$APK"
+
+      # A sideloaded APK only installs over an older one signed with the same
+      # key, so every published build must carry the app's EAS keystore. The
+      # Android debug key ships in every React Native project — anyone can sign
+      # an "update" with it — so an APK signed with it is never published.
+      - name: Check the APK's signing key
+        id: sign
+        env:
+          APK: ${{ runner.temp }}/${{ steps.target.outputs.apk }}
+        run: |
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)
+          [ -n "$APKSIGNER" ] || { echo "::error::No apksigner on this runner — cannot check the APK's signing key"; exit 1; }
+          CERTS=$("$APKSIGNER" verify --print-certs "$APK")
+          echo "$CERTS"
+          if grep -q 'certificate DN:.*CN=Android Debug' <<<"$CERTS"; then
+            echo "::error::The APK is signed with the Android debug key — refusing to publish it"; exit 1
+          fi
+          CERT=$(grep -m1 -o 'certificate SHA-256 digest: [0-9a-f]\{64\}' <<<"$CERTS" | awk '{print $NF}')
+          [ -n "$CERT" ] || { echo "::error::Could not read the APK's signing certificate"; exit 1; }
+          printf 'cert=%s\nsha256=%s\n' "$CERT" "$(sha256sum "$APK" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
       # An existing release keeps its tag and its own notes; the block between
       # the noir-apk-build markers is rewritten on every run so the notes always
@@ -529,7 +596,10 @@ jobs:
       - name: Upload to release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.release_tag }}
+          TAG: ${{ steps.target.outputs.tag }}
+          APK_NAME: ${{ steps.target.outputs.apk }}
+          APK_SHA256: ${{ steps.sign.outputs.sha256 }}
+          APK_CERT: ${{ steps.sign.outputs.cert }}
           REPO: ${{ github.repository }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           EVIDENCE: ${{ needs.deploy.outputs.evidence }}
@@ -541,7 +611,11 @@ jobs:
           SHA=$(git rev-parse HEAD)
           {
             echo "<!-- noir-apk-build -->"
-            echo "**Noir.apk** built from [\`${SHA:0:7}\`](https://github.com/$REPO/commit/$SHA) by [this workflow run]($RUN_URL)."
+            echo "**$APK_NAME** built from [\`${SHA:0:7}\`](https://github.com/$REPO/commit/$SHA) by [this workflow run]($RUN_URL)."
+            echo
+            echo "APK SHA-256: \`$APK_SHA256\`. Signing certificate SHA-256: \`$APK_CERT\`."
+            echo
+            echo "If Android refuses to install this over an older Noir (\"App not installed\"), that build was signed with a different key. Write down your recovery phrase first, then uninstall the old app and install this one — uninstalling erases the wallet stored on the phone."
             echo
             echo "| Contract (Testnet) | ID |"
             echo "|---|---|"
@@ -571,7 +645,11 @@ jobs:
             | while read -r a; do gh release delete-asset "$TAG" "$a" -y; done
           # Without a redeploy, attach the committed evidence for these IDs.
           [ -n "$EVIDENCE" ] || EVIDENCE=$(grep -lx "EXPO_PUBLIC_DEVICE_REGISTRY_CONTRACT=$DEVICE_ID" deploy-evidence/deploy-*.md | head -1 || true)
-          FILES=("$RUNNER_TEMP/Noir.apk" "$MATRIX")
+          FILES=("$RUNNER_TEMP/$APK_NAME" "$MATRIX")
           [ -n "$EVIDENCE" ] && [ -f "$EVIDENCE" ] && FILES+=("$EVIDENCE")
           gh release upload "$TAG" "${FILES[@]}" --clobber
-          echo "Uploaded to https://github.com/$REPO/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "Uploaded to https://github.com/$REPO/releases/tag/$TAG"
+            echo
+            echo "Download: https://github.com/$REPO/releases/download/$TAG/$APK_NAME"
+          } >> "$GITHUB_STEP_SUMMARY"

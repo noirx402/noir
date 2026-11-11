@@ -639,7 +639,15 @@ export class StellarService {
       const authEntries = Array.from(invokeBody.auth())
       if (IS_DEV) logger.debug(`[invokeContract] auth entries:`, authEntries.length)
       if (authEntries.length > 0) {
-        const { sequence } = await withTimeout(this.soroban.getLatestLedger(), '[invokeContract getLatestLedger]', 10000)
+        // Use the ledger the simulation ran against instead of calling
+        // getLatestLedger(): that RPC decodes the full LedgerHeader, so any
+        // new header XDR the network starts emitting (e.g. StellarValueType 3,
+        // ms close times) throws "unknown StellarValueType member for value 3"
+        // on an older SDK and blocks every signed call — including NFC linking.
+        const sequence = Number(simulation.latestLedger)
+        if (!Number.isFinite(sequence) || sequence <= 0) {
+          throw new Error('Simulation response did not include latestLedger')
+        }
         const validUntil = sequence + 10
         if (IS_DEV) logger.debug(`[invokeContract] signing ${authEntries.length} auth entries, validUntil=${validUntil}`)
         const signed = await Promise.all(

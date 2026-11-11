@@ -52,6 +52,8 @@ TransactionBase.prototype.toXDR = function () {
 }
 ```
 
+**4. Ledger-header decoding**: `rpc.Server.getLatestLedger()` decodes the full ledger header XDR, so an SDK older than the network's XDR fails with `XDR Read Error: unknown StellarValueType member for value 3` (Testnet, Nov 2026 — fixed in SDK 16.4.x). Don't call it just to get a ledger number: `invokeContract` reads `simulation.latestLedger` instead. Keep the SDK on the latest 16.x LTS.
+
 **3. HTTP client**: Always import the full SDK from `@stellar/stellar-sdk/axios` (uses real `axios` / XMLHttpRequest instead of feaxios/fetch):
 
 ```ts

@@ -639,7 +639,15 @@ export class StellarService {
       const authEntries = Array.from(invokeBody.auth())
       if (IS_DEV) logger.debug(`[invokeContract] auth entries:`, authEntries.length)
       if (authEntries.length > 0) {
-        const { sequence } = await withTimeout(this.soroban.getLatestLedger(), '[invokeContract getLatestLedger]', 10000)
+        // Take the ledger sequence from the simulation we already have, not
+        // from getLatestLedger(): that call decodes the whole ledger header,
+        // so a header format the installed SDK predates (Testnet's
+        // StellarValueType 3) fails every signed call with "XDR Read Error:
+        // unknown StellarValueType member for value 3".
+        const sequence = Number(simulation.latestLedger)
+        if (!Number.isInteger(sequence) || sequence <= 0) {
+          throw new Error('simulation returned no latestLedger')
+        }
         const validUntil = sequence + 10
         if (IS_DEV) logger.debug(`[invokeContract] signing ${authEntries.length} auth entries, validUntil=${validUntil}`)
         const signed = await Promise.all(

@@ -139,3 +139,74 @@ describe('StellarService balance cache', () => {
     expect(load).toHaveBeenCalledTimes(3)
   })
 })
+
+// Testnet ledger headers now carry StellarValueType 3 (millisecond close
+// times). rpc.Server.getLatestLedger() decodes the whole header, so an SDK
+// that predates the new type throws "unknown StellarValueType member for
+// value 3" — which broke every signed contract call (NFC tag linking first).
+// The auth expiry must come from the simulation response instead.
+describe('StellarService.invokeContract auth signing', () => {
+  it('takes the auth expiry ledger from the simulation, not getLatestLedger', async () => {
+    const sdk = await import('@stellar/stellar-sdk/axios')
+    const { StellarService } = await import('@/services/stellar-service')
+    const kp = sdk.Keypair.random()
+    const contractId = sdk.StrKey.encodeContract(Buffer.alloc(32, 7))
+    const entry = new sdk.xdr.SorobanAuthorizationEntry({
+      credentials: sdk.xdr.SorobanCredentials.sorobanCredentialsAddress(
+        new sdk.xdr.SorobanAddressCredentials({
+          address: new sdk.Address(kp.publicKey()).toScAddress(),
+          nonce: sdk.xdr.Int64.fromString('1'),
+          signatureExpirationLedger: 0,
+          signature: sdk.xdr.ScVal.scvVoid(),
+        }),
+      ),
+      rootInvocation: new sdk.xdr.SorobanAuthorizedInvocation({
+        function: sdk.xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(
+          new sdk.xdr.InvokeContractArgs({
+            contractAddress: new sdk.Address(contractId).toScAddress(),
+            functionName: 'register',
+            args: [],
+          }),
+        ),
+        subInvocations: [],
+      }),
+    })
+
+    const svc = new StellarService({ network: 'testnet' })
+    const sent: any[] = []
+    const getLatestLedger = vi.fn(async () => {
+      throw new Error('XDR Read Error: unknown StellarValueType member for value 3')
+    })
+    ;(svc as any).soroban = {
+      simulateTransaction: vi.fn(async () => ({
+        _parsed: true,
+        id: '1',
+        latestLedger: 5000,
+        events: [],
+        minResourceFee: '1000',
+        transactionData: new sdk.SorobanDataBuilder(),
+        result: { auth: [entry], retval: sdk.xdr.ScVal.scvVoid() },
+      })),
+      getLatestLedger,
+      sendTransaction: vi.fn(async (tx: any) => {
+        sent.push(tx)
+        return { status: 'PENDING', hash: 'abc123' }
+      }),
+    }
+    vi.spyOn(svc, 'ensureAccountFunded').mockResolvedValue(true)
+
+    const hash = await svc.invokeContract({
+      contractId,
+      method: 'register',
+      args: [],
+      signerSecret: kp.secret(),
+      sourceAccount: new sdk.Account(kp.publicKey(), '1'),
+    })
+
+    expect(hash).toBe('abc123')
+    expect(getLatestLedger).not.toHaveBeenCalled()
+    const signedAuth = sent[0].operations[0].auth[0].credentials().address()
+    expect(signedAuth.signatureExpirationLedger()).toBe(5010)
+    expect(signedAuth.signature().switch().name).toBe('scvVec')
+  })
+})

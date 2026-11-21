@@ -7,6 +7,10 @@ Completes `device_registry` coverage (every public function except the admin-onl
 - `getDevice(deviceHash)` returns `{ owner, agent, active, createdAt }` (or `null`) from `get_device`.
 - `isDeviceAuthorized(deviceHash, agent)` wraps `is_authorized`: linked agent and device active.
 - `parseDeviceInfo(scVal)` and the `NoirDeviceInfo` type are exported for apps that read `get_device` themselves.
+- Fix: `getEvents()` and `watch()` with no `startLedger` or cursor failed on Testnet with
+  `XDR Read Error: unknown StellarValueType member for value 3`. The current ledger now comes from
+  `getHealth` instead of `getLatestLedger`, which decodes the full ledger header. Apps should still run
+  `@stellar/stellar-sdk` 16.4.1 or later, since 16.3.x and earlier cannot decode the new header value.
 
 ## 0.3.0
 

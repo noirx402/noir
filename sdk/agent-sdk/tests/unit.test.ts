@@ -283,3 +283,22 @@ describe('device registry reads', () => {
     expect(await no.client.isDeviceAuthorized(HASH, agent)).toBe(false)
   })
 })
+
+describe('getEvents start ledger', () => {
+  it('reads the latest ledger from getHealth, never getLatestLedger', async () => {
+    // getLatestLedger decodes the full LedgerHeader and throws on header values an
+    // older stellar-sdk does not know ("unknown StellarValueType member for value 3").
+    const client = new NoirAgentClient()
+    const server = client.server as unknown as Record<string, unknown>
+    let startLedger: number | undefined
+    server.getLatestLedger = async () => { throw new Error('XDR Read Error: unknown StellarValueType member for value 3') }
+    server.getHealth = async () => ({ status: 'healthy', latestLedger: 1234, oldestLedger: 1, ledgerRetentionWindow: 1 })
+    server.getEvents = async (req: { startLedger?: number }) => {
+      startLedger = req.startLedger
+      return { events: [], cursor: '', latestLedger: 1234 }
+    }
+    const page = await client.getEvents()
+    expect(startLedger).toBe(1234)
+    expect(page.latestLedger).toBe(1234)
+  })
+})

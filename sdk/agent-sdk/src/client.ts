@@ -346,13 +346,25 @@ export class NoirAgentClient {
 
   // ── Events ────────────────────────────────────────────────────────
 
+  /**
+   * Current ledger sequence. Reads it from getHealth, not getLatestLedger:
+   * stellar-sdk 16 decodes the full LedgerHeader in getLatestLedger, so a new
+   * header value the network starts emitting (StellarValueType 3, ms close
+   * times) throws "unknown StellarValueType member for value 3" on SDK < 16.4.
+   * getHealth returns the sequence as a plain number with no XDR to decode.
+   */
+  private async latestLedgerSequence(): Promise<number> {
+    const { latestLedger } = await this.server.getHealth()
+    return latestLedger
+  }
+
   /** One page of Noir events, from a ledger or from a previous page's cursor. */
   async getEvents(q: { startLedger?: number; cursor?: string; limit?: number } = {}): Promise<{ events: NoirEvent[]; cursor: string; latestLedger: number }> {
     const filters = [{ type: 'contract' as const, contractIds: Object.values(this.contracts) }]
     const limit = q.limit ?? EVENTS_PAGE
     const res = q.cursor
       ? await this.server.getEvents({ filters, cursor: q.cursor, limit })
-      : await this.server.getEvents({ filters, startLedger: q.startLedger ?? (await this.server.getLatestLedger()).sequence, limit })
+      : await this.server.getEvents({ filters, startLedger: q.startLedger ?? (await this.latestLedgerSequence()), limit })
     const events = res.events.map((e) => decodeEvent(e, this.contracts)).filter((e): e is NoirEvent => e !== null)
     return { events, cursor: res.cursor, latestLedger: res.latestLedger }
   }
